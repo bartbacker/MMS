@@ -94,23 +94,23 @@ bool QueueEmpty(Queue& queue)           //Checks if queue is empty (floodfill)
 
 //implement Stack (stack is used for remembering split road cells for rechecking)
 
-typedef struct _stackItem
+typedef struct _stackItem   //Stack item structure remembers its position and previous stackitem
 {
     Coord pos;
     _stackItem* prev;
 } stackItem;
 
-typedef struct
+typedef struct              //Stack structure knows top stack item (most recent)
 {
     stackItem* top;
 } Stack;
 
-void StackInit(Stack& stack)
+void StackInit(Stack& stack)    //Sets top stack item to null (empty)
 {
     stack.top = NULL;
 }
 
-void StackPush(Stack& stack, Coord pos)
+void StackPush(Stack& stack, Coord pos) //New item created. Assigned current position. Previous new item assigned to the old top. Top assigned to new item (pushes old item down 1)
 {
     stackItem* newItem = (stackItem*)malloc(sizeof(stackItem));
     newItem->pos = pos;
@@ -118,7 +118,7 @@ void StackPush(Stack& stack, Coord pos)
     stack.top = newItem;
 }
 
-Coord StackPop(Stack&stack)
+Coord StackPop(Stack&stack)             //Sets position to top item position (value). Old item assigned old top item. Top item assigned to new top item (previous item). Pops / frees top item and pushes previous item to top item
 {
     Coord pos = stack.top->pos;
     stackItem* oldItem = stack.top;
@@ -127,12 +127,12 @@ Coord StackPop(Stack&stack)
     return pos;
 }
 
-bool StackEmpty(Stack& stack)
+bool StackEmpty(Stack& stack)      //Check if stack empty
 {
     return stack.top == NULL;
 }
 
-void UpdateSimulator(Maze maze) // redraws the maze in simulator after each loop in main
+void UpdateSimulator(Maze maze) // redraws the maze in simulator after each loop in main. Actually sets walls and text for distances
 {
     for(int y = 0; y < 16; y++){
         for(int x = 0; x < 16; x++){
@@ -153,7 +153,7 @@ void UpdateSimulator(Maze maze) // redraws the maze in simulator after each loop
     }
 }
 
-Coord FindNeighborCoord(Coord pos, Direction direction)
+Coord FindNeighborCoord(Coord pos, Direction direction) //
 {
     switch (direction)
     {
