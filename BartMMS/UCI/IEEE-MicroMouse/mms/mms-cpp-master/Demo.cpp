@@ -153,7 +153,7 @@ void UpdateSimulator(Maze maze) // redraws the maze in simulator after each loop
     }
 }
 
-Coord FindNeighborCoord(Coord pos, Direction direction) //
+Coord FindNeighborCoord(Coord pos, Direction direction) //Returns neighbor cell based on direction mouse is facing and position the mouse is in
 {
     switch (direction)
     {
@@ -164,7 +164,7 @@ Coord FindNeighborCoord(Coord pos, Direction direction) //
     }
 }
 
-void AddWall(Maze& maze, Coord pos, Direction direction)
+void AddWall(Maze& maze, Coord pos, Direction direction) //Adds cell wall in pos coord + direction. A cell wall is also added to the neighbor facing in the same direction as the mouse but in the opposite direction
 {
     maze.cellWalls[pos.y][pos.x] |= dir_mask[direction];
     Coord neighbor = FindNeighborCoord(pos, direction);
@@ -172,7 +172,7 @@ void AddWall(Maze& maze, Coord pos, Direction direction)
         maze.cellWalls[neighbor.y][neighbor.x] |= dir_mask[(direction + 2) % 4];
 }
 
-bool ScanWalls(Maze& maze, Mouse mouse)
+bool ScanWalls(Maze& maze, Mouse mouse) //Scans wall around mouse after every iteration and adds walls based on if a wall is scanned in front, to the right, or to the left of the mouse. The function also returns if any walls were found (true/false)
 {
     bool found = false;
     
@@ -237,7 +237,7 @@ void Floodfill(Maze& maze)
     }
 }
 
-void SwitchMouseDirection(Mouse& mouse, Direction direction)
+void SwitchMouseDirection(Mouse& mouse, Direction direction) //Mouse turns a certain way based on the direction it faces based on the true directions (N,W,S,E) (Relative vs Global Directions)
 {
     if (mouse.dir == (Direction)((direction + 1) % 4))
         API::turnLeft();
@@ -251,7 +251,7 @@ void SwitchMouseDirection(Mouse& mouse, Direction direction)
     mouse.dir = direction;
 }
 
-void MoveMouse(Mouse& mouse, Coord pos)
+void MoveMouse(Mouse& mouse, Coord pos) //Mouse either turns or moves forward based on if the position from stack (exploring) is different from the mouse's position
 {
     if (pos.x > mouse.pos.x)
         SwitchMouseDirection(mouse, EAST);
