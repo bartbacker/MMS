@@ -215,7 +215,7 @@ void Floodfill(Maze& maze)
     
     while (!QueueEmpty(queue))
     {
-        Coord pos = QueuePop(queue);
+        Coord pos = QueuePop(queue);    //Pops very coord from the queue for analysis
 
         for(int j = 0; j < 4; j++)
         {
@@ -229,8 +229,8 @@ void Floodfill(Maze& maze)
                 //check if neighbor has been visited yet
                 if (maze.distances[neighbor.y][neighbor.x] == 999)
                 {
-                    maze.distances[neighbor.y][neighbor.x] = maze.distances[pos.y][pos.x] + 1;
-                    QueuePush(queue, neighbor);
+                    maze.distances[neighbor.y][neighbor.x] = maze.distances[pos.y][pos.x] + 1; //Makes neighbor value, previous value (like 0) buts adds 1 to it
+                    QueuePush(queue, neighbor); //Pushes neighbor cells no interrupted by walls into the queue
                 }
             }
         }
