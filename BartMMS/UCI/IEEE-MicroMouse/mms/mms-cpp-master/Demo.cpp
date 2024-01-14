@@ -299,11 +299,13 @@ int main(int argc, char* argv[])
     
     while (!StackEmpty(stack))
     {
+        //Pops first coord from stack to analyze
         Coord pos = StackPop(stack);
         
         //move mouse to new position
         MoveMouse(mouse, pos);
         
+        //If there are walls do floodfill and update maze based on new walls found
         if (ScanWalls(maze, mouse))
         {
             //update floodfill if new walls found
@@ -329,7 +331,7 @@ int main(int argc, char* argv[])
                 !maze.visited[neighbor.y][neighbor.x] &&
                 (maze.distances[neighbor.y][neighbor.x] < maze.distances[pos.y][pos.x]))
             {
-                StackPush(stack, pos);
+                StackPush(stack, pos); //Puts middle of the road coords (when both coords in a maze display same distance) into stack for analysis
                 StackPush(stack, neighbor);
                 maze.visited[neighbor.y][neighbor.x] = true;
             }
