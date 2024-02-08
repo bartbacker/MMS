@@ -92,6 +92,16 @@ bool QueueEmpty(Queue& queue)           //Checks if queue is empty (floodfill)
     return ((queue.head == NULL) && (queue.tail == NULL));
 }
 
+//Implements Min Heap Complete Binary Tree (ALTERNATE FLOODFILL ALGORITHM)
+
+int g(Coord A, Coord B, Maze& maze){
+    return abs(maze.distances[B.y][B.x] - maze.distances[A.y][A.x]);
+}
+
+int h(Coord A, Maze& maze){
+    return maze.distances[A.y][A.x];
+}
+
 //implement Stack (stack is used for remembering split road cells for rechecking)
 
 typedef struct _stackItem   //Stack item structure remembers its position and previous stackitem
@@ -215,7 +225,7 @@ void Floodfill(Maze& maze)
     
     while (!QueueEmpty(queue))
     {
-        Coord pos = QueuePop(queue);    //Pops very coord from the queue for analysis
+        Coord pos = QueuePop(queue);    //Pops very first coord from the queue for analysis
 
         for(int j = 0; j < 4; j++)
         {
@@ -328,8 +338,9 @@ int main(int argc, char* argv[])
 
             //check if there is no wall && neighbor hasn't been visited yet && neighbor could have shorter distance
             if ((!(maze.cellWalls[pos.y][pos.x] & dir_mask[direction])) &&
-                !maze.visited[neighbor.y][neighbor.x] &&
-                (maze.distances[neighbor.y][neighbor.x] < maze.distances[pos.y][pos.x]))
+                !maze.visited[neighbor.y][neighbor.x]
+                //COMMENT THIS OUT IF YOU WANT MOUSE TO EXPLORE ENTIRE MAZE
+                && (maze.distances[neighbor.y][neighbor.x] < maze.distances[pos.y][pos.x]))
             {
                 StackPush(stack, pos); //Puts middle of the road coords (when both coords in a maze display same distance) into stack for analysis
                 StackPush(stack, neighbor);
@@ -337,5 +348,11 @@ int main(int argc, char* argv[])
             }
         }
     }
+    /*After mouse explores all sections OR all useful sections do the following:
+     1. Write an algorithm that converts all floodfill distance values to time
+     2. This can be done by incrementing cell values exponentially based on how long of a line they form
+     3. start this algorithm from the mouse's current position at the start
+    */
+    
     fprintf(stderr, "DONE\n");
 }
