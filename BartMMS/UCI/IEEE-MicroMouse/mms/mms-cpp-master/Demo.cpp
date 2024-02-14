@@ -342,7 +342,7 @@ int main(int argc, char* argv[])
 
             //check if there is no wall && neighbor hasn't been visited yet && neighbor could have shorter distance
             if ((!(maze.cellWalls[pos.y][pos.x] & dir_mask[direction])) && !maze.visited[neighbor.y][neighbor.x]
-                && (maze.distances[neighbor.y][neighbor.x] < maze.distances[pos.y][pos.x])
+                //&& (maze.distances[neighbor.y][neighbor.x] < maze.distances[pos.y][pos.x])
                 ){
                         StackPush(stack, pos); //Puts middle of the road coords (when both coords in a maze display same distance) into stack for analysis
                         StackPush(stack, neighbor);
