@@ -94,12 +94,16 @@ bool QueueEmpty(Queue& queue)           //Checks if queue is empty (floodfill)
 
 //Implements Min Heap Complete Binary Tree (ALTERNATE FLOODFILL ALGORITHM)
 
-int g(Coord A, Coord B, Maze& maze){
+int actual(Coord A, Coord B, Maze& maze){
     return abs(maze.distances[B.y][B.x] - maze.distances[A.y][A.x]);
 }
 
-int h(Coord A, Maze& maze){
+int heuristic(Coord A, Maze& maze){
     return maze.distances[A.y][A.x];
+}
+
+int totalCost(int actual, int heuristic){
+    return actual + heuristic;
 }
 
 //implement Stack (stack is used for remembering split road cells for rechecking)
@@ -337,17 +341,16 @@ int main(int argc, char* argv[])
             Coord neighbor = FindNeighborCoord(mouse.pos, direction);
 
             //check if there is no wall && neighbor hasn't been visited yet && neighbor could have shorter distance
-            if ((!(maze.cellWalls[pos.y][pos.x] & dir_mask[direction])) &&
-                !maze.visited[neighbor.y][neighbor.x]
-                //COMMENT THIS OUT IF YOU WANT MOUSE TO EXPLORE ENTIRE MAZE
-                && (maze.distances[neighbor.y][neighbor.x] < maze.distances[pos.y][pos.x]))
-            {
-                StackPush(stack, pos); //Puts middle of the road coords (when both coords in a maze display same distance) into stack for analysis
-                StackPush(stack, neighbor);
-                maze.visited[neighbor.y][neighbor.x] = true;
+            if ((!(maze.cellWalls[pos.y][pos.x] & dir_mask[direction])) && !maze.visited[neighbor.y][neighbor.x]
+                && (maze.distances[neighbor.y][neighbor.x] < maze.distances[pos.y][pos.x])
+                ){
+                        StackPush(stack, pos); //Puts middle of the road coords (when both coords in a maze display same distance) into stack for analysis
+                        StackPush(stack, neighbor);
+                        maze.visited[neighbor.y][neighbor.x] = true;
+                }
             }
         }
-    }
+    
     /*After mouse explores all sections OR all useful sections do the following:
      1. Write an algorithm that converts all floodfill distance values to time
      2. This can be done by incrementing cell values exponentially based on how long of a line they form
