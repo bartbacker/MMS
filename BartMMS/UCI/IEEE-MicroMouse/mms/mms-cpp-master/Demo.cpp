@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cmath>
 
 #include "API.h"
 
@@ -24,7 +25,8 @@ struct Coord {
 };
 
 struct Maze {
-    int distances[16][16];  //Mouse distances by cell (numbers in maze program)
+    int distances[16][16];  //Mouse MANHATTAN distances by cell (numbers in maze program)
+    int eucliDistance[16][16];  //Mouse EUCLIDEAN distances by cell
     int cellWalls[16][16];  //Number of cell walls at point
     bool visited[16][16];
 };
@@ -92,17 +94,20 @@ bool QueueEmpty(Queue& queue)           //Checks if queue is empty (floodfill)
     return ((queue.head == NULL) && (queue.tail == NULL));
 }
 
-//Implements Min Heap Complete Binary Tree (ALTERNATE FLOODFILL ALGORITHM)
+//Implements A* with euclidean distance cost (ALTERNATE FLOODFILL ALGORITHM)
+int euclideanDistance(int x1, int y1, int x2, int y2) {
+    return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+}
 
-int actual(Coord A, Coord B, Maze& maze){
+int actual(Coord A, Coord B, Maze& maze){   //Return euclidean distance between inputted cell (A) and goal cell (B)
     return abs(maze.distances[B.y][B.x] - maze.distances[A.y][A.x]);
 }
 
-int heuristic(Coord A, Maze& maze){
-    return maze.distances[A.y][A.x];
+int heuristic(Coord poppedCell, Maze& maze){     //Returns euclidean distance between poppedCell and goal cell
+    return euclideanDistance(poppedCell.x, poppedCell.y, goalCell.x, goalCell.y);
 }
 
-int totalCost(int actual, int heuristic){
+int totalCost(int actual, int heuristic){   //Returns heuristic + actual
     return actual + heuristic;
 }
 
