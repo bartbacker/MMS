@@ -4,6 +4,9 @@
 
 #include "API.h"
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 enum Direction {
     NORTH = 0,
     EAST  = 1,
@@ -22,13 +25,14 @@ enum DirectionBitmask {
 struct Coord {
     int x;
     int y;
+    bool neighbors[16][16];
 };
 
 struct Maze {
     int distances[16][16];  //Mouse MANHATTAN distances by cell (numbers in maze program)
     int eucliDistance[16][16];  //Mouse EUCLIDEAN distances by cell
     int cellWalls[16][16];  //Number of cell walls at point
-    bool visited[16][16];
+    bool visited[16][16];   //keeps track of which cells are visited
 };
 
 struct Mouse {
@@ -94,17 +98,23 @@ bool QueueEmpty(Queue& queue)           //Checks if queue is empty (floodfill)
     return ((queue.head == NULL) && (queue.tail == NULL));
 }
 
-//Implements A* with euclidean distance cost (ALTERNATE FLOODFILL ALGORITHM)
-int euclideanDistance(int x1, int y1, int x2, int y2) {
-    return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+//Implements A* with diagonal distance cost (ALTERNATE ALGORITHM)
+
+int actual(Coord n, Maze& maze){
+    int minDis = MIN(abs(n.x),abs(n.y)); //(minDis chooses smaller distance between either node.x OR node.y from start)
+    int maxDis = MAX(abs(n.x),abs(n.y)); //(maxDis chooses larger distance between either node.x OR node.y from start)
+    int horizCost = 1;
+    int diagCost = 1;
+    return (diagCost*minDis) + horizCost*(maxDis-minDis);
 }
 
-int actual(Coord A, Coord B, Maze& maze){   //Return euclidean distance between inputted cell (A) and goal cell (B)
-    return abs(maze.distances[B.y][B.x] - maze.distances[A.y][A.x]);
-}
-
-int heuristic(Coord poppedCell, Maze& maze){     //Returns euclidean distance between poppedCell and goal cell
-    return euclideanDistance(poppedCell.x, poppedCell.y, goalCell.x, goalCell.y);
+int heuristic(Coord n, Coord goal, Maze& maze){
+    //NEW FUNCTION: Returns cost of diag distance between poppedCell (NEIGHBOR) and goal
+    int minDis = MIN(abs((n.x)-(goal.x)),abs((n.y)-(goal.y))); //(minDis chooses smaller distance between either node.x and goal.x OR node.y and goal.y)
+    int maxDis = MAX(abs((n.x)-(goal.x)),abs((n.y)-(goal.y))); //(maxDis chooses larger distance between either node.x and goal.x OR node.y and goal.y)
+    int horizCost = 1;
+    int diagCost = 1;
+    return (diagCost*minDis) + horizCost*(maxDis-minDis);
 }
 
 int totalCost(int actual, int heuristic){   //Returns heuristic + actual
@@ -237,6 +247,53 @@ void Floodfill(Maze& maze)
         Coord pos = QueuePop(queue);    //Pops very first coord from the queue for analysis
 
         for(int j = 0; j < 4; j++)
+        {
+            //for all 4 directions
+            Direction direction = (Direction)j;
+            //check if there is no wall in that direction
+            if (!(maze.cellWalls[pos.y][pos.x] & dir_mask[direction]))
+            {
+                //find the neighbor in that direction
+                Coord neighbor = FindNeighborCoord(pos, direction);
+                //check if neighbor has been visited yet
+                if (maze.distances[neighbor.y][neighbor.x] == 999)
+                {
+                    maze.distances[neighbor.y][neighbor.x] = maze.distances[pos.y][pos.x] + 1; //Makes neighbor value, previous value (like 0) buts adds 1 to it
+                    QueuePush(queue, neighbor); //Pushes neighbor cells no interrupted by walls into the queue
+                }
+            }
+        }
+    }
+}
+
+void AStar(Maze& maze)
+{
+    //use a queue to process cells in Breadth First Search (BFS) order
+    Queue queue;
+    QueueInit(queue);
+    
+    //initialize distances
+    for(int x = 0; x < 16; x++){
+        for(int y = 0; y < 16; y++){
+            maze.distances[y][x] = 999;
+        }
+    }
+    
+    //TURN THIS SECTION to a section which sets the goal cell to (8,8)? ASK CHELSEA HOW SHE DETERMINES GOAL CELL
+    for(int x = 7; x <= 8; x++){
+        for(int y = 7; y <= 8; y++){
+            maze.distances[y][x] = 0;
+            QueuePush(queue, (Coord){x,y});
+        }
+    }
+    
+    //Add (0,0) and (0,1) to PRIORITY QUEUE
+    
+    while (!QueueEmpty(queue))  //While !PriorityQueueEmpty(queue))
+    {
+        Coord pos = QueuePop(queue);    //For each cell in the priority queue (obtain the 
+
+        for(int j = 0; j < 4; j++)      //
         {
             //for all 4 directions
             Direction direction = (Direction)j;
