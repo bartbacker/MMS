@@ -291,25 +291,9 @@ void AStar(Maze& maze)
     
     while (!QueueEmpty(queue))  //While !PriorityQueueEmpty(queue))
     {
-        Coord pos = QueuePop(queue);    //For each cell in the priority queue (obtain the 
+        Coord pos = QueuePop(queue);    //For each cell in the priority queue (obtain the f score), pop the lowest f score cell, and move to that cell (repeat until goal reached)
 
-        for(int j = 0; j < 4; j++)      //
-        {
-            //for all 4 directions
-            Direction direction = (Direction)j;
-            //check if there is no wall in that direction
-            if (!(maze.cellWalls[pos.y][pos.x] & dir_mask[direction]))
-            {
-                //find the neighbor in that direction
-                Coord neighbor = FindNeighborCoord(pos, direction);
-                //check if neighbor has been visited yet
-                if (maze.distances[neighbor.y][neighbor.x] == 999)
-                {
-                    maze.distances[neighbor.y][neighbor.x] = maze.distances[pos.y][pos.x] + 1; //Makes neighbor value, previous value (like 0) buts adds 1 to it
-                    QueuePush(queue, neighbor); //Pushes neighbor cells no interrupted by walls into the queue
-                }
-            }
-        }
+        
     }
 }
 
