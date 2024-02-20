@@ -17,7 +17,6 @@ struct Heap {
 
 
 heap* makeHeap(int max_elems, int* nums) {
-    
     heap* h = (heap*)malloc(sizeof(heap));
     if (h == NULL) {
         printf("error");
@@ -52,43 +51,31 @@ void free_heap(heap* h) {
     free(h);
 }
 
-int parent(heap* h, int i) {
-    if (i == 0) {
-        printf("root elem");
-        return h->arr[i];
-    }
-    return h->arr[i-1/2];
+int parent(int i) {
+    return (i-1)/2;
 }
 
-int l_child(heap* h, int i) {
-    if(i > h->capacity-2) {
-        printf("leaf");
-        return h->arr[i];
-    }
-    return h->arr[2*i + 1];
+int l_child(int i) {
+    return 2*i + 1;
 }
 
-int r_child(heap* h, int i) {
-    if(i > h->capacity-3) {
-        printf("leaf");
-        return h->arr[i];
-    }
-    return h->arr[2*i + 2];
+int r_child(int i) {
+    return 2*i + 2;
 }
 
 //inserts new value and re-sorts the heap
 void insert(heap* h, int elem) {
-    if (h->size >= capacity) {
-        printf("Heap is full");
-    }
-    else {
-        heap->arr[heap->size - 1] =  elem;
+    if (h->size < h->capacity) {
+        h->arr[h->size - 1] =  elem;
+        int i = h->size;
+        while (i > 0 && h->arr[parent(i)] > h->arr[i]) {
+            int temp = h->arr[parent(i)];
+            h->arr[parent(i)] = h->arr[i];
+            h->arr[i] = temp;
+            i = parent(i);          
+        }
         h->size++;
-
-
-
     }
-
 }
 
 //extracts min value and re-sorts the heap
@@ -108,5 +95,35 @@ int extract(heap* h) {
 }
 
 void heapify(heap* h, int i) {
+    if (h->size == 0) {
+        printf("Empty heap") 
+        return h;
+    }
 
+    int left = l_child(i);
+    int right = r_child(i);
+    int min = i;
+
+    if (left >= h->size || left < 0) {
+        left--;
+    }
+
+    if (right >= h->size || right < 0) {
+        right--;
+    }
+
+    if (left < h->size && h->arr[left] < h->arr[i]) {
+        min = left;
+    }
+
+    if (right < h->size && h->arr[right] < h->arr[i]) {
+        min = right;
+    }
+
+    if (min != i) {
+        int temp = h->arr[min];
+        h->arr[min] = h->arr[i];
+        h->arr[i] = temp;
+        heapify(h, min);
+    }
 }
