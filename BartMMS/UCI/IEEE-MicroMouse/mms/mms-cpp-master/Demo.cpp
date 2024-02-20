@@ -279,7 +279,7 @@ void AStar(Maze& maze)
         }
     }
     
-    //TURN THIS SECTION to a section which sets the goal cell to (8,8)? ASK CHELSEA HOW SHE DETERMINES GOAL CELL
+    //TURN THIS SECTION to a section which sets the goal cell to (8,8)?
     for(int x = 7; x <= 8; x++){
         for(int y = 7; y <= 8; y++){
             maze.distances[y][x] = 0;
