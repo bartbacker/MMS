@@ -104,7 +104,7 @@ int actual(Coord n, Maze& maze){
     int minDis = MIN(abs(n.x),abs(n.y)); //(minDis chooses smaller distance between either node.x OR node.y from start)
     int maxDis = MAX(abs(n.x),abs(n.y)); //(maxDis chooses larger distance between either node.x OR node.y from start)
     int horizCost = 1;
-    int diagCost = 1;
+    int diagCost = 1.414;   //was 1, diagonals approx sqrt(2)
     return (diagCost*minDis) + horizCost*(maxDis-minDis);
 }
 
@@ -113,7 +113,7 @@ int heuristic(Coord n, Coord goal, Maze& maze){
     int minDis = MIN(abs((n.x)-(goal.x)),abs((n.y)-(goal.y))); //(minDis chooses smaller distance between either node.x and goal.x OR node.y and goal.y)
     int maxDis = MAX(abs((n.x)-(goal.x)),abs((n.y)-(goal.y))); //(maxDis chooses larger distance between either node.x and goal.x OR node.y and goal.y)
     int horizCost = 1;
-    int diagCost = 1;
+    int diagCost = 1.414; //was 1, diagonals approx sqrt(2)
     return (diagCost*minDis) + horizCost*(maxDis-minDis);
 }
 
