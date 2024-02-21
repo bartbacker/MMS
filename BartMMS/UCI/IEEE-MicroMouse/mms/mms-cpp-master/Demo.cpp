@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
 #include <cmath>
-
 #include "API.h"
+#include "Minheap.cpp"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
