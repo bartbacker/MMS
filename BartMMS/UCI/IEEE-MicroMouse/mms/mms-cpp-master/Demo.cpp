@@ -26,6 +26,7 @@ struct Coord {
     int x;
     int y;
     bool neighbors[16][16];
+    //ADD INT TOTALCOST (from heuristic + actual)
 };
 
 struct Maze {
@@ -283,16 +284,23 @@ void AStar(Maze& maze)
     for(int x = 7; x <= 8; x++){
         for(int y = 7; y <= 8; y++){
             maze.distances[y][x] = 0;
-            QueuePush(queue, (Coord){x,y});
         }
     }
     
-    //Add (0,0) and (0,1) to PRIORITY QUEUE
+    //makeHeap(256)
+    //insert(Coord (0,0)) starter cells to add to heap (each coord has their own calculated total cost)
+    //insert(Coord (0,1))
     
     while (!QueueEmpty(queue))  //While !PriorityQueueEmpty(queue))
     {
-        Coord pos = QueuePop(queue);    //For each cell in the priority queue (obtain the f score), pop the lowest f score cell, and move to that cell (repeat until goal reached)
-
+        //For each cell in the priority queue (obtain the f score), pop the lowest f score cell, and move to that cell (repeat until goal reached)
+        
+        /*
+        extractMin()
+        add code for mouse to move to cell minimum
+        for( each available neigbbor cell )
+        insert( available neighbor cells into heap )
+        */
         
     }
 }
