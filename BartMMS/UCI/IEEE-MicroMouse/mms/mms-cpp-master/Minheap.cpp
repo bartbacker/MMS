@@ -14,7 +14,7 @@ struct Heap {
     https://www.geeksforgeeks.org/introduction-to-heap-data-structure-and-algorithm-tutorials/,
     and https://www.digitalocean.com/community/tutorials/min-heap-binary-tree
 */
-
+heap* heapify(heap* h, int i);
 
 heap* makeHeap(int max_elems, int* nums) {
     heap* h = (heap*)malloc(sizeof(heap));
@@ -32,8 +32,8 @@ heap* makeHeap(int max_elems, int* nums) {
     }
 
     int i;
-    for (i = 0; i < capacity; i++) {
-        arr[i] = nums[i];
+    for (i = 0; i < h->capacity; i++) {
+        h->arr[i] = nums[i];
     }
     h->size = i;
     i = (h->size -2)/2;
@@ -94,9 +94,9 @@ int extract(heap* h) {
     return min;
 }
 
-void heapify(heap* h, int i) {
+heap* heapify(heap* h, int i) {
     if (h->size == 0) {
-        printf("Empty heap") 
+        printf("Empty heap");
         return h;
     }
 

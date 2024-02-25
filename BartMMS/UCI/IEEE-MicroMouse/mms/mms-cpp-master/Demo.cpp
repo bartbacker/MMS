@@ -31,7 +31,7 @@ struct Coord {
 
 struct Maze {
     int distances[16][16];  //Mouse MANHATTAN distances by cell (numbers in maze program)
-    int eucliDistance[16][16];  //Mouse EUCLIDEAN distances by cell
+    int diagDistance[16][16];  //Mouse DIAGONAL distances by cell
     int cellWalls[16][16];  //Number of cell walls at point
     bool visited[16][16];   //keeps track of which cells are visited
 };
@@ -108,6 +108,16 @@ int actual(Coord n, Maze& maze){
     int diagCost = 1.414;   //was 1, diagonals approx sqrt(2)
     return (diagCost*minDis) + horizCost*(maxDis-minDis);
 }
+
+/*
+ int actual(Coord n, Maze& maze){
+     int minDis = MIN(maze.distances.[n.x][n.y],abs(n.y)); //(minDis chooses smaller distance between either node.x OR node.y from start)
+     int maxDis = MAX(abs(n.x),abs(n.y)); //(maxDis chooses larger distance between either node.x OR node.y from start)
+     int horizCost = 1;
+     int diagCost = 1.414;   //was 1, diagonals approx sqrt(2)
+     return (diagCost*minDis) + horizCost*(maxDis-minDis);
+ }
+ */
 
 int heuristic(Coord n, Coord goal, Maze& maze){
     //NEW FUNCTION: Returns cost of diag distance between poppedCell (NEIGHBOR) and goal
@@ -269,40 +279,15 @@ void Floodfill(Maze& maze)
 
 void AStar(Maze& maze)
 {
-    //use a queue to process cells in Breadth First Search (BFS) order
-    Queue queue;
-    QueueInit(queue);
+    //makeHeap(256, int* visited[])
     
-    //initialize distances
-    for(int x = 0; x < 16; x++){
-        for(int y = 0; y < 16; y++){
-            maze.distances[y][x] = 999;
-        }
-    }
-    
-    //TURN THIS SECTION to a section which sets the goal cell to (8,8)?
-    for(int x = 7; x <= 8; x++){
-        for(int y = 7; y <= 8; y++){
-            maze.distances[y][x] = 0;
-        }
-    }
-    
-    //makeHeap(256)
-    //insert(Coord (0,0)) starter cells to add to heap (each coord has their own calculated total cost)
-    //insert(Coord (0,1))
-    
-    while (!QueueEmpty(queue))  //While !PriorityQueueEmpty(queue))
-    {
-        //For each cell in the priority queue (obtain the f score), pop the lowest f score cell, and move to that cell (repeat until goal reached)
+    /*while (!heapEmpty())
         
-        /*
         extractMin()
         add code for mouse to move to cell minimum
-        for( each available neigbbor cell )
-        insert( available neighbor cells into heap )
-        */
+        heapify()
         
-    }
+    */
 }
 
 void SwitchMouseDirection(Mouse& mouse, Direction direction) //Mouse turns a certain way based on the direction it faces based on the true directions (N,W,S,E) (Relative vs Global Directions)
