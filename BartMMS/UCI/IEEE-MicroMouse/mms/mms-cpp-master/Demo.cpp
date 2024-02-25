@@ -101,23 +101,21 @@ bool QueueEmpty(Queue& queue)           //Checks if queue is empty (floodfill)
 
 //Implements A* with diagonal distance cost (ALTERNATE ALGORITHM)
 
-int actual(Coord n, Maze& maze){
+/*int actual(Coord n, Maze& maze, bool diagonal_movement_allowed){
     int minDis = MIN(abs(n.x),abs(n.y)); //(minDis chooses smaller distance between either node.x OR node.y from start)
     int maxDis = MAX(abs(n.x),abs(n.y)); //(maxDis chooses larger distance between either node.x OR node.y from start)
     int horizCost = 1;
-    int diagCost = 1.414;   //was 1, diagonals approx sqrt(2)
+    int diagCost = diagonal_movement_allowed ? 1.414 : 999;   //was 1, diagonals approx sqrt(2)
     return (diagCost*minDis) + horizCost*(maxDis-minDis);
-}
+}*/
 
-/*
  int actual(Coord n, Maze& maze){
-     int minDis = MIN(maze.distances.[n.x][n.y],abs(n.y)); //(minDis chooses smaller distance between either node.x OR node.y from start)
+     int minDis = MIN(abs(n.x),abs(n.y)); //(minDis chooses smaller distance between either node.x OR node.y from start)
      int maxDis = MAX(abs(n.x),abs(n.y)); //(maxDis chooses larger distance between either node.x OR node.y from start)
      int horizCost = 1;
      int diagCost = 1.414;   //was 1, diagonals approx sqrt(2)
      return (diagCost*minDis) + horizCost*(maxDis-minDis);
  }
- */
 
 int heuristic(Coord n, Coord goal, Maze& maze){
     //NEW FUNCTION: Returns cost of diag distance between poppedCell (NEIGHBOR) and goal
