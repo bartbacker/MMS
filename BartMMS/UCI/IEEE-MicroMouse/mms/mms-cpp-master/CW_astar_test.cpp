@@ -9,7 +9,7 @@
 //stack impl from bart's code but imma use cells instead
 typedef struct _stackItem   //Stack item structure remembers its position and previous stackitem
 {
-    Coord pos;
+    Node pos;
     _stackItem* prev;
 } stackItem;
 
@@ -23,7 +23,7 @@ void StackInit(Stack& stack)    //Sets top stack item to null (empty)
     stack.top = NULL;
 }
 
-void StackPush(Stack& stack, Coord pos) //New item created. Assigned current position. Previous new item assigned to the old top. Top assigned to new item (pushes old item down 1)
+void StackPush(Stack& stack, Node pos) //New item created. Assigned current position. Previous new item assigned to the old top. Top assigned to new item (pushes old item down 1)
 {
     stackItem* newItem = (stackItem*)malloc(sizeof(stackItem));
     newItem->pos = pos;
@@ -31,9 +31,9 @@ void StackPush(Stack& stack, Coord pos) //New item created. Assigned current pos
     stack.top = newItem;
 }
 
-Coord StackPop(Stack&stack)             //Sets position to top item position (value). Old item assigned old top item. Top item assigned to new top item (previous item). Pops / frees top item and pushes previous item to top item
+Node StackPop(Stack&stack)             //Sets position to top item position (value). Old item assigned old top item. Top item assigned to new top item (previous item). Pops / frees top item and pushes previous item to top item
 {
-    Coord pos = stack.top->pos;
+    Node pos = stack.top->pos;
     stackItem* oldItem = stack.top;
     stack.top = stack.top->prev;
     free(oldItem);
@@ -45,34 +45,61 @@ bool StackEmpty(Stack& stack)      //Check if stack empty
     return stack.top == NULL;
 }
 
-Coord neighborNodes(Maze* maze, Coord current) {
-	getNeighborCells(maze, current.x, current.y);
+
+Coord* pathing(Coord n) {
+	Coord path[5];
+	return path;
 }
 
-int gScore(Coord start, Coord current) {
-    if (current.x == start.x && current.y == start.y) {
-        return 0; 
-	}
-	return 0; //actual squares covered thus far
+int heuristic(Coord a, Coord b){
+	return (abs(a.x - b.x)) + (abs(a.y - b.y)); //manhatten heuristic to avoid weird turningstuff
 }
 
-int fScore(Coord start, Coord current, Coord goal) {
-    return gScore(start, current) + (abs(goal.x-current.x)) + (abs(goal.y - current.y)); //manhatten heuristic to avoid weird turningstuff
-}
-
-void a_star(Maze *maze, Coord start, Coord goal) {
-    Coord current;
-	Stack closeList;
-    StackInit(closeList);
-	Heap* openList = makeHeap(256, maze);
-	for (int x = 0; x < 16; x++) {
-		for (int y = 0; y < 16; y++) {
-			heap_insert(openList, )
+Node* neighborNodes(Maze* maze, Node current) {
+	CellList *neighborCells = getNeighborCells(maze, current.loc.x, current.loc.y);
+	int size;
+	for (int j = 0; j < neighborCells->size; j++) {
+		Cell c = neighborCells->cells[j];
+		if (!c.blocked) {
+			size++;
 		}
 	}
+	Node *neighbors = (Node *)malloc(size * sizeof(Node));
+	int i = 0;
+	for (int j = 0; j < neighborCells->size; j++) {
+		Cell c = neighborCells->cells[j];
+		if (!c.blocked) {
+			neighbors[i] = Node{c.pos, current.g_score + 1};
+			i++;
+		}
+	}
+}
+
+Coord* a_star_algo(Maze* maze, Coord start, Coord goal) {
+	Node current;
+	Stack closeList;
+    StackInit(closeList);
+	Node nodes[256];
+	Node* neighbors;
+
+	nodes[0].g_score = 0;
+	nodes[0].f_score = nodes[0].g_score + heuristic(start, goal);
+	for (int y = 0; y < 16; y++) {
+		for (int x = 0; x < 16; x++) {
+			nodes[y*16+x] = Node{Coord{x,y}, MAX_COST, MAX_COST};
+		}
+	}
+	Heap* openList = makeHeap(256, maze);
 	while (!is_empty(openList)) {
+		current = heap_extract(openList);
+		if (current.loc.x == goal.x && current.loc.y == goal.y) {
+			return pathing(goal);
+		}
+		StackPush(closeList, current);
+		neighbors = neighborNodes(maze, current);
 		
 	}
+	return NULL;
 }
 
 int dis = 0;

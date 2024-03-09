@@ -10,8 +10,8 @@ struct Heap {
 
 typedef struct Node node;
 struct Node {
-    int x;
-    int y;
+    Coord loc;
+    int g_score;
     int f_score;
 };
 //arr[0] is root element, minimum value of entire tree after heapify is run
@@ -22,7 +22,7 @@ struct Node {
     and https://www.digitalocean.com/community/tutorials/min-heap-binary-tree
 */
 
-heap* makeHeap(int max_elems, Maze *maze, Node *nodeList) {
+heap* makeHeap(int max_elems, Maze *maze) {
     heap* h = (heap*)malloc(sizeof(heap));
     if (h == NULL) {
         printf("error");
@@ -37,35 +37,23 @@ heap* makeHeap(int max_elems, Maze *maze, Node *nodeList) {
         return NULL;
     }
 
-    int i;
-    for (i = 0; i < h->capacity; i++) {
-        h->arr[i] = nodeList[i];
-    }
-    h->size = i;
-    i = (h->size -2)/2;
-
-    while (i >= 0) {
-        heapify(h, i);
-        i--;
-    }
-
     return h;
 }
 
-void free_heap(heap* h) {
+void free_heap(heap* h) { //free heap memory
     free(h->arr);
     free(h);
 }
 
-int parent(int i) {
+int parent(int i) { //parent position
     return (i-1)/2;
 }
 
-int l_child(int i) {
+int l_child(int i) { //left child position
     return 2*i + 1;
 }
 
-int r_child(int i) {
+int r_child(int i) { //right child position
     return 2*i + 2;
 }
 
