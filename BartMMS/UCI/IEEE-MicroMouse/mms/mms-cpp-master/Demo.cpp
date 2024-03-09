@@ -140,32 +140,6 @@ bool StackEmpty(Stack& stack)      //Check if stack empty
 }
 
 
-//Implements A* with diagonal distance cost (ALTERNATE ALGORITHM)
-
-int gScore(Coord start, Coord current) {
-    if (current.x == start.x && current.y == start.y) {
-        return 0;
-    }
-    return 1;
-}
-
-int fScore(Coord start, Coord current) {
-    return gScore(start, current) + (abs(start.x-current.x)) + (abs(start.y - current.y)); //manhatten heuristic to avoid weird turningstuff
-}
-
-
-void a_star(Maze& maze, Coord start, Coord goal) {
-    Stack openList;
-    StackInit(openList);
-    for (int x = 0; x < 16; x++) {
-		for (int y = 0; y < 16; y++) {
-			StackPush(openList, Coord{x,y}); //since start is 0,0 manhatten is just x,y
-		}
-	}
-    Stack closeList;
-    StackInit(closeList);
-}
-
 void UpdateSimulator(Maze maze) // redraws the maze in simulator after each loop in main. Actually sets walls and text for distances
 {
     for(int y = 0; y < 16; y++){

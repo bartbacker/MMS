@@ -245,7 +245,7 @@ void floodfill(Maze *maze) {
 	for (int i = 0; i < goalSize; i++) {
 		int x = maze->goalPos[i].x;
 		int y = maze->goalPos[i].y;
-		queue[i] = (Coord){x, y};
+		queue[i] = Coord{x, y};
 		tail++;
 	}
 	int newcost;

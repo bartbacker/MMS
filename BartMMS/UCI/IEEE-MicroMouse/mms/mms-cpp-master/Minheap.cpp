@@ -1,12 +1,19 @@
 #include <iostream>
+#include "CW_Maze.cpp"
 
 typedef struct Heap heap;
 struct Heap {
-    int *arr;   //dynamic array
+    Node *arr;   //dynamic array
     int size;   //number of elems in heap
     int capacity; //max elems possible
 };
 
+typedef struct Node node;
+struct Node {
+    int x;
+    int y;
+    int f_score;
+};
 //arr[0] is root element, minimum value of entire tree after heapify is run
 
 /*
@@ -15,14 +22,14 @@ struct Heap {
     and https://www.digitalocean.com/community/tutorials/min-heap-binary-tree
 */
 
-heap* makeHeap(int max_elems) { //originally had int* nums, but we'll init it all to 0
+heap* makeHeap(int max_elems, Maze *maze, Node *nodeList) {
     heap* h = (heap*)malloc(sizeof(heap));
     if (h == NULL) {
         printf("error");
         return NULL;
     }
 
-    h->arr = (int*)malloc(max_elems * sizeof(int));
+    h->arr = (Node*)malloc(max_elems * sizeof(int));
     h->size = 0;
     h->capacity = max_elems;
     if (h->arr == NULL) {
@@ -32,7 +39,7 @@ heap* makeHeap(int max_elems) { //originally had int* nums, but we'll init it al
 
     int i;
     for (i = 0; i < h->capacity; i++) {
-        h->arr[i] = 0; //originally to nums[i] but we'll init it all to 0
+        h->arr[i] = nodeList[i];
     }
     h->size = i;
     i = (h->size -2)/2;
@@ -63,12 +70,12 @@ int r_child(int i) {
 }
 
 //inserts new value and re-sorts the heap
-void insert(heap* h, int elem) {
+void heap_insert(heap* h, int elem) {
     if (h->size < h->capacity) {
-        h->arr[h->size - 1] =  elem;
+        h->arr[h->size - 1].f_score = elem;
         int i = h->size;
-        while (i > 0 && h->arr[parent(i)] > h->arr[i]) {
-            int temp = h->arr[parent(i)];
+        while (i > 0 && h->arr[parent(i)].f_score > h->arr[i].f_score) {
+            Node temp = h->arr[parent(i)];
             h->arr[parent(i)] = h->arr[i];
             h->arr[i] = temp;
             i = parent(i);          
@@ -78,11 +85,10 @@ void insert(heap* h, int elem) {
 }
 
 //extracts min value and re-sorts the heap
-int extract(heap* h) {
-    int min;
-    if (h->size == 0) {
-        printf("Empty heap");
-        return NULL;
+Node heap_extract(heap* h) {
+    Node min;
+    if (is_empty(h)) {
+        printf("Empty heap"); //needs error catch
     }
     
     min = h->arr[0];
@@ -93,6 +99,7 @@ int extract(heap* h) {
     return min;
 }
 
+//heaps the data
 heap* heapify(heap* h, int i) {
     if (h->size == 0) {
         printf("Empty heap");
@@ -111,18 +118,22 @@ heap* heapify(heap* h, int i) {
         right--;
     }
 
-    if (left < h->size && h->arr[left] < h->arr[i]) {
+    if (left < h->size && h->arr[left].f_score < h->arr[i].f_score) {
         min = left;
     }
 
-    if (right < h->size && h->arr[right] < h->arr[i]) {
+    if (right < h->size && h->arr[right].f_score < h->arr[i].f_score) {
         min = right;
     }
 
     if (min != i) {
-        int temp = h->arr[min];
+        Node temp = h->arr[min];
         h->arr[min] = h->arr[i];
         h->arr[i] = temp;
         heapify(h, min);
     }
+}
+
+bool is_empty(heap* h) {
+    return h->size == 0;
 }
