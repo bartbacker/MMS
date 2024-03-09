@@ -11,8 +11,8 @@ struct Heap {
 typedef struct Node node;
 struct Node {
     Coord loc;
-    int g_score;
-    int f_score;
+    double g_score;
+    double f_score;
 };
 //arr[0] is root element, minimum value of entire tree after heapify is run
 
@@ -58,9 +58,9 @@ int r_child(int i) { //right child position
 }
 
 //inserts new value and re-sorts the heap
-void heap_insert(heap* h, int elem) {
+void heap_insert(heap* h, Node elem) {
     if (h->size < h->capacity) {
-        h->arr[h->size - 1].f_score = elem;
+        h->arr[h->size - 1] = elem;
         int i = h->size;
         while (i > 0 && h->arr[parent(i)].f_score > h->arr[i].f_score) {
             Node temp = h->arr[parent(i)];
@@ -124,4 +124,13 @@ heap* heapify(heap* h, int i) {
 
 bool is_empty(heap* h) {
     return h->size == 0;
+}
+
+bool heapSearch(heap* h, Node elem) {
+    for (int i =0; i < h->size; i++) {
+        	if (elem.loc.x == h->arr[i].loc.x && elem.loc.y == h->arr[i].loc.y) {
+		return true;
+	}
+	return false;
+    }
 }

@@ -45,6 +45,14 @@ bool StackEmpty(Stack& stack)      //Check if stack empty
     return stack.top == NULL;
 }
 
+bool stackSearch(Stack& stack, Node elem) {
+	for (int i = 0; i < sizeof(stack.top); i++) {
+		if (elem.loc.x == stack.top[i].pos.loc.x && elem.loc.y == stack.top[i].pos.loc.y) {
+			return true;
+		}
+	}
+	return false;
+}
 
 Coord* pathing(Coord n) {
 	Coord path[5];
@@ -68,8 +76,12 @@ Node* neighborNodes(Maze* maze, Node current) {
 	int i = 0;
 	for (int j = 0; j < neighborCells->size; j++) {
 		Cell c = neighborCells->cells[j];
-		if (!c.blocked) {
-			neighbors[i] = Node{c.pos, current.g_score + 1};
+		if (!c.blocked && c.dir == maze->mouse_dir) {
+			neighbors[i] = Node{c.pos, current.g_score + 0.8, MAX_COST}; //if mouse is facing same direction as the next cell (dont need to turn)
+			i++;
+		}
+		else if (!c.blocked) {
+			neighbors[i] = Node{c.pos, current.g_score + 1, MAX_COST};
 			i++;
 		}
 	}
@@ -97,7 +109,15 @@ Coord* a_star_algo(Maze* maze, Coord start, Coord goal) {
 		}
 		StackPush(closeList, current);
 		neighbors = neighborNodes(maze, current);
-		
+		for (int i = 0; i < sizeof(neighbors); i++) {
+			if (!stackSearch(closeList, neighbors[i])) {
+				neighbors[i].f_score = neighbors[i].g_score + heuristic(neighbors[i].loc, goal);
+				if (!heapSearch(openList, neighbors[i])) {
+					heap_insert(openList, neighbors[i]);
+				}
+				else
+			}
+		}
 	}
 	return NULL;
 }
