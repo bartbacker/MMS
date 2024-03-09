@@ -99,37 +99,6 @@ bool QueueEmpty(Queue& queue)           //Checks if queue is empty (floodfill)
     return ((queue.head == NULL) && (queue.tail == NULL));
 }
 
-//Implements A* with diagonal distance cost (ALTERNATE ALGORITHM)
-
-/*int actual(Coord n, Maze& maze, bool diagonal_movement_allowed){
-    int minDis = MIN(abs(n.x),abs(n.y)); //(minDis chooses smaller distance between either node.x OR node.y from start)
-    int maxDis = MAX(abs(n.x),abs(n.y)); //(maxDis chooses larger distance between either node.x OR node.y from start)
-    int horizCost = 1;
-    int diagCost = diagonal_movement_allowed ? 1.414 : 999;   //was 1, diagonals approx sqrt(2)
-    return (diagCost*minDis) + horizCost*(maxDis-minDis);
-}*/
-
- int actual(Coord n, Maze& maze){
-     int minDis = MIN(abs(n.x),abs(n.y)); //(minDis chooses smaller distance between either node.x OR node.y from start)
-     int maxDis = MAX(abs(n.x),abs(n.y)); //(maxDis chooses larger distance between either node.x OR node.y from start)
-     int horizCost = 1;
-     int diagCost = 1.414;   //was 1, diagonals approx sqrt(2)
-     return (diagCost*minDis) + horizCost*(maxDis-minDis);
- }
-
-int heuristic(Coord n, Coord goal, Maze& maze){
-    //NEW FUNCTION: Returns cost of diag distance between poppedCell (NEIGHBOR) and goal
-    int minDis = MIN(abs((n.x)-(goal.x)),abs((n.y)-(goal.y))); //(minDis chooses smaller distance between either node.x and goal.x OR node.y and goal.y)
-    int maxDis = MAX(abs((n.x)-(goal.x)),abs((n.y)-(goal.y))); //(maxDis chooses larger distance between either node.x and goal.x OR node.y and goal.y)
-    int horizCost = 1;
-    int diagCost = 1.414; //was 1, diagonals approx sqrt(2)
-    return (diagCost*minDis) + horizCost*(maxDis-minDis);
-}
-
-int totalCost(int actual, int heuristic){   //Returns heuristic + actual
-    return actual + heuristic;
-}
-
 //implement Stack (stack is used for remembering split road cells for rechecking)
 
 typedef struct _stackItem   //Stack item structure remembers its position and previous stackitem
@@ -168,6 +137,17 @@ Coord StackPop(Stack&stack)             //Sets position to top item position (va
 bool StackEmpty(Stack& stack)      //Check if stack empty
 {
     return stack.top == NULL;
+}
+
+
+//Implements A* with diagonal distance cost (ALTERNATE ALGORITHM)
+
+void a_star(Maze& maze, Coord start, Coord goal) {
+    Stack openList;
+    StackInit(openList);
+    for (int)
+    Stack closeList;
+    StackInit(closeList);
 }
 
 void UpdateSimulator(Maze maze) // redraws the maze in simulator after each loop in main. Actually sets walls and text for distances
@@ -273,19 +253,6 @@ void Floodfill(Maze& maze)
             }
         }
     }
-}
-
-void AStar(Maze& maze)
-{
-    //makeHeap(256, int* visited[])
-    
-    /*while (!heapEmpty())
-        
-        extractMin()
-        add code for mouse to move to cell minimum
-        heapify()
-        
-    */
 }
 
 void SwitchMouseDirection(Mouse& mouse, Direction direction) //Mouse turns a certain way based on the direction it faces based on the true directions (N,W,S,E) (Relative vs Global Directions)

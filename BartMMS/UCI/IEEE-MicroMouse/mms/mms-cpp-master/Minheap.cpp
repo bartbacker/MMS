@@ -14,9 +14,8 @@ struct Heap {
     https://www.geeksforgeeks.org/introduction-to-heap-data-structure-and-algorithm-tutorials/,
     and https://www.digitalocean.com/community/tutorials/min-heap-binary-tree
 */
-heap* heapify(heap* h, int i);
 
-heap* makeHeap(int max_elems, int* nums) {
+heap* makeHeap(int max_elems) { //originally had int* nums, but we'll init it all to 0
     heap* h = (heap*)malloc(sizeof(heap));
     if (h == NULL) {
         printf("error");
@@ -33,7 +32,7 @@ heap* makeHeap(int max_elems, int* nums) {
 
     int i;
     for (i = 0; i < h->capacity; i++) {
-        h->arr[i] = nums[i];
+        h->arr[i] = 0; //originally to nums[i] but we'll init it all to 0
     }
     h->size = i;
     i = (h->size -2)/2;
