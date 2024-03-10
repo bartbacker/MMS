@@ -13,6 +13,7 @@ struct Node {
     Coord loc;
     double g_score;
     double f_score;
+    Node* parent;
 };
 //arr[0] is root element, minimum value of entire tree after heapify is run
 
@@ -126,11 +127,11 @@ bool is_empty(heap* h) {
     return h->size == 0;
 }
 
-bool heapSearch(heap* h, Node elem) {
+int heapSearch(heap* h, Node elem) {
     for (int i =0; i < h->size; i++) {
-        	if (elem.loc.x == h->arr[i].loc.x && elem.loc.y == h->arr[i].loc.y) {
-		return true;
+        if (elem.loc.x == h->arr[i].loc.x && elem.loc.y == h->arr[i].loc.y) {
+		    return i;
+        }
 	}
-	return false;
-    }
+	return -1;
 }

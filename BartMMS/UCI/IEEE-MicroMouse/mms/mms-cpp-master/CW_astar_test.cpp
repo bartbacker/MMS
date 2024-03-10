@@ -54,8 +54,18 @@ bool stackSearch(Stack& stack, Node elem) {
 	return false;
 }
 
-Coord* pathing(Coord n) {
-	Coord path[5];
+Node* pathing(Node node) {
+	int size = 0;
+	while (node.parent != NULL) {
+		size++;
+		node = *(node.parent);
+	}
+	Node *path = (Node *)malloc(size * sizeof(Node));
+	int i = 0;
+	while (node.parent != NULL) {
+		node = *(node.parent);
+		path[i] = node;
+	}
 	return path;
 }
 
@@ -77,45 +87,54 @@ Node* neighborNodes(Maze* maze, Node current) {
 	for (int j = 0; j < neighborCells->size; j++) {
 		Cell c = neighborCells->cells[j];
 		if (!c.blocked && c.dir == maze->mouse_dir) {
-			neighbors[i] = Node{c.pos, current.g_score + 0.8, MAX_COST}; //if mouse is facing same direction as the next cell (dont need to turn)
+			neighbors[i] = Node{c.pos, current.g_score + 0.8, INT_MAX, &current}; //if mouse is facing same direction as the next cell (dont need to turn)
 			i++;
 		}
 		else if (!c.blocked) {
-			neighbors[i] = Node{c.pos, current.g_score + 1, MAX_COST};
+			neighbors[i] = Node{c.pos, current.g_score + 1, INT_MAX, &current};
 			i++;
 		}
 	}
 }
 
-Coord* a_star_algo(Maze* maze, Coord start, Coord goal) {
+Node* a_star_algo(Maze* maze, Coord start, Coord goal) {
 	Node current;
 	Stack closeList;
     StackInit(closeList);
 	Node nodes[256];
-	Node* neighbors;
+	Node* neighbor;
+	int heapIndex;
+	Node openNeighbor;
 
 	nodes[0].g_score = 0;
 	nodes[0].f_score = nodes[0].g_score + heuristic(start, goal);
 	for (int y = 0; y < 16; y++) {
 		for (int x = 0; x < 16; x++) {
-			nodes[y*16+x] = Node{Coord{x,y}, MAX_COST, MAX_COST};
+			nodes[y*16+x] = Node{Coord{x,y}, INT_MAX, INT_MAX};
 		}
 	}
 	Heap* openList = makeHeap(256, maze);
 	while (!is_empty(openList)) {
 		current = heap_extract(openList);
 		if (current.loc.x == goal.x && current.loc.y == goal.y) {
-			return pathing(goal);
+			return pathing(current);
 		}
 		StackPush(closeList, current);
-		neighbors = neighborNodes(maze, current);
-		for (int i = 0; i < sizeof(neighbors); i++) {
-			if (!stackSearch(closeList, neighbors[i])) {
-				neighbors[i].f_score = neighbors[i].g_score + heuristic(neighbors[i].loc, goal);
-				if (!heapSearch(openList, neighbors[i])) {
-					heap_insert(openList, neighbors[i]);
+		neighbor = neighborNodes(maze, current);
+		for (int i = 0; i < sizeof(neighbor); i++) {
+			if (!stackSearch(closeList, neighbor[i])) {
+				neighbor[i].f_score = neighbor[i].g_score + heuristic(neighbor[i].loc, goal);
+				heapIndex = heapSearch(openList, neighbor[i]);
+				if (heapIndex < 0) {
+					heap_insert(openList, neighbor[i]);
 				}
-				else
+				else {
+					openNeighbor = openList->arr[heapIndex];
+					if (neighbor[i].g_score < openNeighbor.g_score) {
+						openNeighbor.g_score = neighbor->g_score;
+						openNeighbor.parent = neighbor->parent;
+					}
+				}
 			}
 		}
 	}
