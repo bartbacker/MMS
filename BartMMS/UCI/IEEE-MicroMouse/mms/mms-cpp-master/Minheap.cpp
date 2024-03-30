@@ -1,30 +1,18 @@
 #include <iostream>
-#include "CW_Maze.cpp"
+#include "API.h"
+//#include "CW_Maze.cpp"
 
-typedef struct Heap heap;
-struct Heap {
-    Node *arr;   //dynamic array
-    int size;   //number of elems in heap
-    int capacity; //max elems possible
-};
-
-typedef struct Node node;
-struct Node {
-    Coord loc;
-    double g_score;
-    double f_score;
-    Node* parent;
-};
-//arr[0] is root element, minimum value of entire tree after heapify is run
+//arr[0] is root element, minimum value of entire tree after Heapify is run
 
 /*
-    sources: https://www.geeksforgeeks.org/c-program-to-implement-min-heap/, 
-    https://www.geeksforgeeks.org/introduction-to-heap-data-structure-and-algorithm-tutorials/,
-    and https://www.digitalocean.com/community/tutorials/min-heap-binary-tree
+    sources: https://www.geeksforgeeks.org/c-program-to-implement-min-Heap/, 
+    https://www.geeksforgeeks.org/introduction-to-Heap-data-structure-and-algorithm-tutorials/,
+    and https://www.digitalocean.com/community/tutorials/min-Heap-binary-tree
 */
 
-heap* makeHeap(int max_elems, Maze *maze) {
-    heap* h = (heap*)malloc(sizeof(heap));
+
+Heap* makeHeap(int max_elems, Maze *maze) {
+    Heap* h = (Heap*)malloc(sizeof(Heap));
     if (h == NULL) {
         printf("error");
         return NULL;
@@ -41,7 +29,7 @@ heap* makeHeap(int max_elems, Maze *maze) {
     return h;
 }
 
-void free_heap(heap* h) { //free heap memory
+void free_heap(Heap* h) { //free Heap memory
     free(h->arr);
     free(h);
 }
@@ -58,8 +46,8 @@ int r_child(int i) { //right child position
     return 2*i + 2;
 }
 
-//inserts new value and re-sorts the heap
-void heap_insert(heap* h, Node elem) {
+//inserts new value and re-sorts the Heap
+void heap_insert(Heap* h, Node elem) {
     if (h->size < h->capacity) {
         h->arr[h->size - 1] = elem;
         int i = h->size;
@@ -73,26 +61,10 @@ void heap_insert(heap* h, Node elem) {
     }
 }
 
-//extracts min value and re-sorts the heap
-Node heap_extract(heap* h) {
-    Node min;
-    if (is_empty(h)) {
-        printf("Empty heap"); //needs error catch
-    }
-    
-    min = h->arr[0];
-    h->arr[0] = h->arr[h->size-1];
-    h->size--;
-
-    heapify(h,0);
-    return min;
-}
-
-//heaps the data
-heap* heapify(heap* h, int i) {
+//Heaps the data
+void heapify (Heap* h, int i) {
     if (h->size == 0) {
-        printf("Empty heap");
-        return h;
+        printf("Empty Heap");
     }
 
     int left = l_child(i);
@@ -123,15 +95,30 @@ heap* heapify(heap* h, int i) {
     }
 }
 
-bool is_empty(heap* h) {
+bool is_empty(Heap* h) {
     return h->size == 0;
 }
 
-int heapSearch(heap* h, Node elem) {
+int heap_search(Heap* h, Node elem) {
     for (int i =0; i < h->size; i++) {
         if (elem.loc.x == h->arr[i].loc.x && elem.loc.y == h->arr[i].loc.y) {
 		    return i;
         }
 	}
 	return -1;
+}
+
+//extracts min value and re-sorts the Heap
+Node heap_extract(Heap* h) {
+    Node min;
+    if (is_empty(h)) {
+        printf("Empty Heap"); //needs error catch
+    }
+    
+    min = h->arr[0];
+    h->arr[0] = h->arr[h->size-1];
+    h->size--;
+
+    heapify(h,0);
+    return min;
 }
