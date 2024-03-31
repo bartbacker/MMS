@@ -229,15 +229,6 @@ void floodfill(Maze *maze) {
 	}
 }
 
-
-
-	maze.mouse_dir = NORTH;
-	std::cerr << "start a*" << std::endl; 
-	Node* path = a_star_algo(&maze, Coord{7,7});
-	std::cerr << "algo done" << std::endl; 
-	
-}
-
 //floodfill main 
 /*
 int main(int argc, char *argv[]) {
@@ -263,5 +254,10 @@ int main(int argc, char *argv[]) {
 			round++;
 		}
 	}
+	maze.mouse_dir = NORTH;
+	std::cerr << "start a*" << std::endl; 
+	Node* path = a_star_algo(&maze, Coord{7,7});
+	std::cerr << "algo done" << std::endl; 
+	
 }
 */

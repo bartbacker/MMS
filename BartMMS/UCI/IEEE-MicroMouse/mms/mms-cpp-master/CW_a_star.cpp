@@ -3,49 +3,112 @@
 #include "API.h"
 #include <cmath>
 #include "Maze.h"
-#include "CW_Maze.cpp"
+#include "Minheap.cpp"
+
+CellList *findNeighborCells(Maze *maze, int x, int y) //returns neighbor cells to a specific cell from the maze
+{
+	CellList *cellList = (CellList *)malloc(sizeof(CellList));
+	int walls = maze->cellWalls[y][x];
+
+	int sides;
+	if ((x == 0 || x == 15) && (y == 0 || y == 15)) {
+		sides = 2;
+	}
+	else if ((x == 0 || x == 15) || (y == 0 || y == 15)) {
+		sides = 3;
+	}
+	else {
+		sides = 4;
+	}
+
+	cellList->size = sides;
+	cellList->cells = (Cell *)malloc(cellList->size * sizeof(Cell));
+
+	int i = 0;
+	if (x != 0)	{
+		if ((walls & WEST_MASK) || (maze->cellWalls[y][x-1] & EAST_MASK)) {
+			cellList->cells[i] = (Cell){Coord{x - 1, y}, Direction::WEST, true};
+			i++;
+		}
+		else {
+			cellList->cells[i] = (Cell){Coord{x - 1, y}, Direction::WEST, false};
+			i++;
+		}
+	}
+	if (y != 15) {
+		if ((walls & NORTH_MASK) || (maze->cellWalls[y+1][x] & SOUTH_MASK)) {
+			cellList->cells[i] = (Cell){Coord{x, y + 1}, Direction::NORTH, true};
+			i++;
+		}
+		else {
+			cellList->cells[i] = (Cell){Coord{x, y + 1}, Direction::NORTH, false};
+			i++;
+		} 
+	}
+	if (x != 15) {
+		if ((walls & EAST_MASK) || (maze->cellWalls[y][x+1] & WEST_MASK)) {
+			cellList->cells[i] = (Cell){Coord{x + 1, y}, Direction::EAST, true};
+			i++;
+		}
+		else {
+			cellList->cells[i] = (Cell){Coord{x + 1, y}, Direction::EAST, false};
+			i++;
+		}
+	}
+	if (y != 0)	{
+		if ((walls & SOUTH_MASK) || (maze->cellWalls[y-1][x] & NORTH_MASK)){
+			cellList->cells[i] = (Cell){Coord{x, y - 1}, Direction::SOUTH, true};
+			i++;
+		}
+		else {
+			cellList->cells[i] = (Cell){Coord{x, y - 1}, Direction::SOUTH, false};
+			i++;
+		}
+	}
+	return cellList;
+}
 
 //a* algo
-//stack impl from bart's code but imma use cells instead
-typedef struct _stackItem   //Stack item structure remembers its position and previous stackitem
+//stack impl from bart's code but using Nodes
+typedef struct _nodeStackItem   //Stack item structure remembers its position and previous stackitem
 {
     Node pos;
-    _stackItem* prev;
-} stackItem;
+    _nodeStackItem* prev;
+} nodeStackItem;
 
 typedef struct              //Stack structure knows top stack item (most recent)
 {
-    stackItem* top;
-} Stack;
+    nodeStackItem* top;
+} nodeStack;
 
-void StackInit(Stack& stack)    //Sets top stack item to null (empty)
+void nodeStackInit(nodeStack& stack)    //Sets top stack item to null (empty)
 {
     stack.top = NULL;
 }
 
-void StackPush(Stack& stack, Node pos) //New item created. Assigned current position. Previous new item assigned to the old top. Top assigned to new item (pushes old item down 1)
+void nodeStackPush(nodeStack& stack, Node pos) //New item created. Assigned current position. Previous new item assigned to the old top. Top assigned to new item (pushes old item down 1)
 {
-    stackItem* newItem = (stackItem*)malloc(sizeof(stackItem));
+    nodeStackItem* newItem = (nodeStackItem*)malloc(sizeof(nodeStackItem));
     newItem->pos = pos;
     newItem->prev = stack.top;
     stack.top = newItem;
 }
 
-Node StackPop(Stack&stack)             //Sets position to top item position (value). Old item assigned old top item. Top item assigned to new top item (previous item). Pops / frees top item and pushes previous item to top item
+Node nodeStackPop(nodeStack& stack)             //Sets position to top item position (value). Old item assigned old top item. Top item assigned to new top item (previous item). Pops / frees top item and pushes previous item to top item
 {
     Node pos = stack.top->pos;
-    stackItem* oldItem = stack.top;
+    nodeStackItem* oldItem = stack.top;
     stack.top = stack.top->prev;
     free(oldItem);
     return pos;
 }
 
-bool StackEmpty(Stack& stack)      //Check if stack empty
+bool nodeStackEmpty(nodeStack& stack)      //Check if stack empty
 {
     return stack.top == NULL;
 }
 
-bool stackSearch(Stack& stack, Node elem) {
+bool nodeStackSearch(nodeStack& stack, Node elem) { //searches through stack for specific elem
 	for (int i = 0; i < sizeof(stack.top); i++) {
 		if (elem.loc.x == stack.top[i].pos.loc.x && elem.loc.y == stack.top[i].pos.loc.y) {
 			return true;
@@ -54,7 +117,7 @@ bool stackSearch(Stack& stack, Node elem) {
 	return false;
 }
 
-Node* pathing(Node node) {
+Node* pathing(Node node) {  //returns path from goal node to start node
 	int size = 0;
 	while (node.parent != NULL) {
 		size++;
@@ -70,12 +133,12 @@ Node* pathing(Node node) {
 	return path;
 }
 
-double heuristic(Coord a, Coord b){
-	return (abs(a.x - b.x)) + (abs(a.y - b.y)); //manhatten heuristic to avoid weird turningstuff
+double heuristic(Coord a, Coord b){ //manhatten heuristic to avoid weird turning stuff
+	return (abs(a.x - b.x)) + (abs(a.y - b.y)); 
 }
 
-Node* neighborNodes(Maze* maze, Node current) {		
-	CellList *neighborCells = getNeighborCells(maze, current.loc.x, current.loc.y);
+Node* neighborNodes(Maze* maze, Node current) {		//returns the adjacent nodes to a specific node
+	CellList *neighborCells = findNeighborCells(maze, current.loc.x, current.loc.y);
 	int size;
 	std::cerr << "number of neighbors "<< neighborCells->size << std::endl;
 	for (int j = 0; j < neighborCells->size; j++) {
@@ -90,22 +153,22 @@ Node* neighborNodes(Maze* maze, Node current) {
 		Cell c = neighborCells->cells[j];
 		if (!c.blocked && c.dir == maze->mouse_dir) {
 			std::cerr << "same_direction" << std::endl; //will need to implement "turning" within routing algo
-			neighbors[i] = Node{c.pos, current.g_score + 0.75, INT_MAX, &current}; //if mouse is facing same direction as the next cell (dont need to turn)
+			neighbors[i] = Node{c.pos, current.g_score, INT_MAX, &current}; 
 			i++;
 		}
 		else if (!c.blocked) {
 			std::cerr << "needs_turn" << std::endl; 
-			neighbors[i] = Node{c.pos, current.g_score + 1, INT_MAX, &current};
+			neighbors[i] = Node{c.pos, current.g_score + 0.25, INT_MAX, &current}; //if need to turn to cell, add a modifier to g_score (turning cost)
 			i++;
 		}
 	}
 	return neighbors;
 }
 
-Node* a_star_algo(Maze* maze, Coord goal) {
+Node* a_star_algo(Maze* maze, Coord goal) { //main algorithm, finds shortest path to set goal
 	Node current;
-	Stack closeList;
-    StackInit(closeList);
+	nodeStack closeList;
+    nodeStackInit(closeList);
 	Node* neighbor;
 	int heapIndex;
 	Node openNeighbor;
@@ -120,7 +183,7 @@ Node* a_star_algo(Maze* maze, Coord goal) {
 	while (openList->size != 0) {
 		current = heap_extract(openList);
 		std::cerr << "current " << current.loc.x << ", "<< current.loc.y << std::endl;
-		StackPush(closeList, current);	
+		nodeStackPush(closeList, current);	
 		if (current.loc.x == goal.x && current.loc.y == goal.y) {
 			std::cerr << "reached goal" << std::endl;
 			return pathing(current);
@@ -128,7 +191,7 @@ Node* a_star_algo(Maze* maze, Coord goal) {
 
 		neighbor = neighborNodes(maze, current);
 		for (int i = 0; i < sizeof(neighbor); i++) {
-			if (!stackSearch(closeList, neighbor[i])) {
+			if (!nodeStackSearch(closeList, neighbor[i])) {
 				neighbor[i].f_score = neighbor[i].g_score + heuristic(neighbor[i].loc, goal);
 				heapIndex = heap_search(openList, neighbor[i]);
 				if (heapIndex < 0) {

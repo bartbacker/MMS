@@ -39,7 +39,7 @@ struct Maze {
 	Coord mouse_pos;
 	Direction mouse_dir;
 	int distances[16][16];
-	bool exploredCells[16][16];
+	bool visited[16][16];
 	int cellWalls[16][16];
 	Coord *goalPos;
 };
