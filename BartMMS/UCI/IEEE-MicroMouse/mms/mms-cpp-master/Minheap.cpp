@@ -1,5 +1,6 @@
 #include <iostream>
 #include "API.h"
+#include "Maze.h"
 //#include "CW_Maze.cpp"
 
 //arr[0] is root element, minimum value of entire tree after Heapify is run
@@ -10,95 +11,79 @@
     and https://www.digitalocean.com/community/tutorials/min-Heap-binary-tree
 */
 
-
-Heap* makeHeap(int max_elems, Maze *maze) {
+//init the heap
+Heap* makeHeap(int max_capacity) { 
     Heap* h = (Heap*)malloc(sizeof(Heap));
     if (h == NULL) {
-        printf("error");
+        std::cerr << "makeheap error" << std::endl; 
         return NULL;
     }
 
-    h->arr = (Node*)malloc(max_elems * sizeof(int));
     h->size = 0;
-    h->capacity = max_elems;
-    if (h->arr == NULL) {
-        printf("error");
-        return NULL;
-    }
+    h->capacity = max_capacity;
+    h->arr = (Node*)malloc(max_capacity * sizeof(int));
 
     return h;
 }
 
-void free_heap(Heap* h) { //free Heap memory
+//free Heap memory
+void free_heap(Heap* h) { 
     free(h->arr);
     free(h);
 }
 
-int parent(int i) { //parent position
+//parent position
+int parent(int i) { 
     return (i-1)/2;
 }
 
-int l_child(int i) { //left child position
+//left child position
+int l_child(int i) { 
     return 2*i + 1;
 }
 
-int r_child(int i) { //right child position
+ //right child position
+int r_child(int i) {
     return 2*i + 2;
 }
 
-//inserts new value and re-sorts the Heap
-void heap_insert(Heap* h, Node elem) {
-    if (h->size < h->capacity) {
-        h->arr[h->size - 1] = elem;
-        int i = h->size;
-        while (i > 0 && h->arr[parent(i)].f_score > h->arr[i].f_score) {
-            Node temp = h->arr[parent(i)];
-            h->arr[parent(i)] = h->arr[i];
-            h->arr[i] = temp;
-            i = parent(i);          
-        }
-        h->size++;
-    }
-}
-
-//Heaps the data
+//Sorts the data
 void heapify (Heap* h, int i) {
     if (h->size == 0) {
-        printf("Empty Heap");
+        std::cerr << "nothing to heap, empty" << std::endl; 
     }
 
-    int left = l_child(i);
-    int right = r_child(i);
-    int min = i;
+    else {
+        int left = l_child(i);
+        int right = r_child(i);
+        int min = i;
 
-    if (left >= h->size || left < 0) {
-        left--;
-    }
+        if (left >= h->size || left < 0) {
+            left = -1;
+        }
 
-    if (right >= h->size || right < 0) {
-        right--;
-    }
+        if (right >= h->size || right < 0) {
+            right = -1;
+        }
 
-    if (left < h->size && h->arr[left].f_score < h->arr[i].f_score) {
-        min = left;
-    }
+        if (left < h->size && h->arr[left].f_score < h->arr[i].f_score) {
+            min = left;
+        }
 
-    if (right < h->size && h->arr[right].f_score < h->arr[i].f_score) {
-        min = right;
-    }
+        if (right < h->size && h->arr[right].f_score < h->arr[i].f_score) {
+            min = right;
+        }
 
-    if (min != i) {
-        Node temp = h->arr[min];
-        h->arr[min] = h->arr[i];
-        h->arr[i] = temp;
-        heapify(h, min);
+        if (min != i) {
+            Node temp = h->arr[min];
+            h->arr[min] = h->arr[i];
+            h->arr[i] = temp;
+            heapify(h, min);
+        }
     }
 }
 
-bool is_empty(Heap* h) {
-    return h->size == 0;
-}
-
+//search for elem in heap
 int heap_search(Heap* h, Node elem) {
     for (int i =0; i < h->size; i++) {
         if (elem.loc.x == h->arr[i].loc.x && elem.loc.y == h->arr[i].loc.y) {
@@ -111,8 +96,8 @@ int heap_search(Heap* h, Node elem) {
 //extracts min value and re-sorts the Heap
 Node heap_extract(Heap* h) {
     Node min;
-    if (is_empty(h)) {
-        printf("Empty Heap"); //needs error catch
+    if (h->size == 0) {
+        std::cerr << "extract failed" << std::endl; 
     }
     
     min = h->arr[0];
@@ -121,4 +106,21 @@ Node heap_extract(Heap* h) {
 
     heapify(h,0);
     return min;
+}
+
+//inserts new value and re-sorts the Heap
+void heap_insert(Heap* h, Node elem) {
+    if (h->size < h->capacity) {
+        h->size++;
+
+        int i = h->size - 1;
+        h->arr[i] = elem;
+        while (i > 0 && h->arr[parent(i)].f_score > h->arr[i].f_score) {
+            Node temp = h->arr[parent(i)];
+            h->arr[parent(i)] = h->arr[i];
+            h->arr[i] = temp;
+            i = parent(i);          
+        }
+    }
+    //heapify(h,0);
 }
