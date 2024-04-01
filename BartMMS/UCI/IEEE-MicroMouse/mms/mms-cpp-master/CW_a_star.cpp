@@ -109,15 +109,18 @@ bool nodeStackEmpty(nodeStack& stack)      //Check if stack empty
 }
 
 bool nodeStackSearch(nodeStack& stack, Node elem) { //searches through stack for specific elem
-	for (int i = 0; i < sizeof(stack.top); i++) {
-		if (elem.loc.x == stack.top[i].pos.loc.x && elem.loc.y == stack.top[i].pos.loc.y) {
+	nodeStackItem *curr_item = stack.top;
+	while (curr_item != NULL) {
+		if (curr_item->pos.loc.x == elem.loc.x && curr_item->pos.loc.y == elem.loc.y) {
 			return true;
 		}
+		curr_item = curr_item->prev;
 	}
 	return false;
 }
 
 Node* pathing(Node node) {  //returns path from goal node to start node
+	std::cerr << "pathing" << std::endl;
 	int size = 0;
 	while (node.parent != NULL) {
 		size++;
@@ -128,7 +131,7 @@ Node* pathing(Node node) {  //returns path from goal node to start node
 	while (node.parent != NULL) {
 		node = *(node.parent);
 		path[i] = node;
-		std::cerr << "x coord" << path[i].loc.x << "y coord" << path[i].loc.x << std::endl;
+		//std::cerr << "x coord" << path[i].loc.x << "y coord" << path[i].loc.x << std::endl;
 	}
 	return path;
 }
@@ -140,7 +143,6 @@ double heuristic(Coord a, Coord b){ //manhatten heuristic to avoid weird turning
 Node* neighborNodes(Maze* maze, Node current) {		//returns the adjacent nodes to a specific node
 	CellList *neighborCells = findNeighborCells(maze, current.loc.x, current.loc.y);
 	int size;
-	std::cerr << "number of neighbors "<< neighborCells->size << std::endl;
 	for (int j = 0; j < neighborCells->size; j++) {
 		Cell c = neighborCells->cells[j];
 		if (!c.blocked) {
@@ -152,13 +154,12 @@ Node* neighborNodes(Maze* maze, Node current) {		//returns the adjacent nodes to
 	for (int j = 0; j < neighborCells->size; j++) {
 		Cell c = neighborCells->cells[j];
 		if (!c.blocked && c.dir == maze->mouse_dir) {
-			std::cerr << "same_direction" << std::endl; //will need to implement "turning" within routing algo
+			 //will need to implement "turning" within routing algo in order to get here
 			neighbors[i] = Node{c.pos, current.g_score, INT_MAX, &current}; 
 			i++;
 		}
 		else if (!c.blocked) {
-			std::cerr << "needs_turn" << std::endl; 
-			neighbors[i] = Node{c.pos, current.g_score + 0.25, INT_MAX, &current}; //if need to turn to cell, add a modifier to g_score (turning cost)
+			neighbors[i] = Node{c.pos, current.g_score /*+ 0.25*/, INT_MAX, &current}; //if need to turn to cell, add a modifier to g_score (turning cost)
 			i++;
 		}
 	}
@@ -180,32 +181,38 @@ Node* a_star_algo(Maze* maze, Coord goal) { //main algorithm, finds shortest pat
 	Heap* openList = makeHeap(256);
 	heap_insert(openList, start_node);
 	
-	while (openList->size != 0) {
+	while (openList->size != 0) { 
 		current = heap_extract(openList);
-		std::cerr << "current " << current.loc.x << ", "<< current.loc.y << std::endl;
-		nodeStackPush(closeList, current);	
+		std::cerr <<"current." << current.loc.x << ", "<< current.loc.y << std::endl;
+		nodeStackPush(closeList, current);
 		if (current.loc.x == goal.x && current.loc.y == goal.y) {
 			std::cerr << "reached goal" << std::endl;
 			return pathing(current);
 		}
-
 		neighbor = neighborNodes(maze, current);
 		for (int i = 0; i < sizeof(neighbor); i++) {
-			if (!nodeStackSearch(closeList, neighbor[i])) {
-				neighbor[i].f_score = neighbor[i].g_score + heuristic(neighbor[i].loc, goal);
-				heapIndex = heap_search(openList, neighbor[i]);
-				if (heapIndex < 0) {
-					heap_insert(openList, neighbor[i]);
-				}
-				else {
-					openNeighbor = openList->arr[heapIndex];
-					if (neighbor[i].g_score < openNeighbor.g_score) {
-						openNeighbor.g_score = neighbor->g_score;
-						openNeighbor.parent = neighbor->parent;
-					}
+			if (nodeStackSearch(closeList, neighbor[i])) {
+				std::cerr << "skip" << neighbor[i].loc.x <<", " << neighbor[i].loc.y << std::endl;
+				continue;
+			}
+			else {
+				
+			}
+			neighbor[i].f_score = neighbor[i].g_score + heuristic(neighbor[i].loc, goal);
+			heapIndex = heap_search(openList, neighbor[i]);
+			if (heapIndex < 0) {
+				std::cerr << "push" << neighbor[i].loc.x <<", " << neighbor[i].loc.y << std::endl;
+				heap_insert(openList, neighbor[i]);
+			}
+			else {
+				openNeighbor = openList->arr[heapIndex];
+				if (neighbor[i].g_score < openNeighbor.g_score) {
+					openNeighbor.g_score = neighbor->g_score;
+					openNeighbor.parent = neighbor->parent;
 				}
 			}
 		}
 	}
+	std::cerr << "path not found"<< std::endl;
 	return NULL;
 }

@@ -49,11 +49,7 @@ int r_child(int i) {
 
 //Sorts the data
 void heapify (Heap* h, int i) {
-    if (h->size == 0) {
-        std::cerr << "nothing to heap, empty" << std::endl; 
-    }
-
-    else {
+    if (h->size != 0) {
         int left = l_child(i);
         int right = r_child(i);
         int min = i;
@@ -81,6 +77,9 @@ void heapify (Heap* h, int i) {
             heapify(h, min);
         }
     }
+    else {
+        std::cerr << "done" << std::endl;
+    }
 }
 
 //search for elem in heap
@@ -95,7 +94,7 @@ int heap_search(Heap* h, Node elem) {
 
 //extracts min value and re-sorts the Heap
 Node heap_extract(Heap* h) {
-    Node min;
+    Node min; 
     if (h->size == 0) {
         std::cerr << "extract failed" << std::endl; 
     }
@@ -103,7 +102,7 @@ Node heap_extract(Heap* h) {
     min = h->arr[0];
     h->arr[0] = h->arr[h->size-1];
     h->size--;
-
+    
     heapify(h,0);
     return min;
 }

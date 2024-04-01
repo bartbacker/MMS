@@ -3,6 +3,7 @@
 #include "API.h"
 #include <cmath>
 #include "Maze.h"
+#include "CW_a_star.cpp"
 
 const int MAX_COST = 255;
  
@@ -230,27 +231,38 @@ void floodfill(Maze *maze) {
 }
 
 //floodfill main 
-/*
+Maze maze;
+int dis = 0;
+int final_dis = MAX_COST;
+int prev_dis = 0;
 int main(int argc, char *argv[]) {
 	maze.mouse_pos = Coord{0, 0};
 	maze.mouse_dir = NORTH;
 	setGoalCell(&maze, 4);
 	floodfill(&maze);
 	int round = 0;
-	while (round < 15) {
+	while (round < 3) { //prev_dis != final_dis) {
 		scanWalls(&maze);
 		updateSimulator(maze);
 		floodfill(&maze);
 		rotate(&maze, getBestCell(&maze, maze.mouse_pos.x, maze.mouse_pos.y).dir);
 		move(&maze);
+		dis++;
 		updateMousePos(&maze.mouse_pos, maze.mouse_dir);
 		if (maze.distances[maze.mouse_pos.y][maze.mouse_pos.x] == 0) {
 			setGoalCell(&maze, 1);
+			prev_dis = final_dis;
+			if (dis < final_dis) {
+				final_dis = dis;
+			}
 			round++;
 		}
 		if ((maze.mouse_pos.x == 0) && (maze.mouse_pos.y == 0)) {
-			dis = maze.distances[maze.mouse_pos.y][maze.mouse_pos.x];
 			setGoalCell(&maze, 4);
+			prev_dis = final_dis;
+			if (dis < final_dis) {
+				final_dis = dis;
+			}
 			round++;
 		}
 	}
@@ -258,6 +270,4 @@ int main(int argc, char *argv[]) {
 	std::cerr << "start a*" << std::endl; 
 	Node* path = a_star_algo(&maze, Coord{7,7});
 	std::cerr << "algo done" << std::endl; 
-	
 }
-*/

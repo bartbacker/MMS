@@ -243,8 +243,7 @@ void MoveMouse(Maze& maze, Coord pos) //Mouse either turns or moves forward base
     maze.mouse_pos = pos;
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     Maze  maze;
     
     //initialize mouse
@@ -252,15 +251,10 @@ int main(int argc, char* argv[])
     maze.mouse_dir = NORTH;
 
     //initialize maze
-    for(int x = 0; x < 16; x++){
-        for(int y = 0; y < 16; y++){
-            maze.cellWalls[y][x] = 0;
+    for(int x = 0; x < 16; x++) {
+        for(int y = 0; y < 16; y++) {
             maze.visited[y][x] = false;
-            //mark the outer walls
-            if (x == 0)  maze.cellWalls[ y][ 0] |= WEST_MASK;
-            if (x == 15) maze.cellWalls[ y][15] |= EAST_MASK;
-            if (y == 0)  maze.cellWalls[ 0][ x] |= SOUTH_MASK;
-            if (y == 15) maze.cellWalls[15][ x] |= NORTH_MASK;
+            maze.cellWalls[y][x] = 0;            
         }
     }
     
@@ -272,8 +266,7 @@ int main(int argc, char* argv[])
     StackPush(stack, (Coord){0, 0});
     StackPush(stack, (Coord){0, 1});
     
-    while (!StackEmpty(stack))
-    {
+    while (!StackEmpty(stack)) {
         //Pops first coord from stack to analyze
         Coord pos = StackPop(stack);
         
@@ -281,19 +274,16 @@ int main(int argc, char* argv[])
         MoveMouse(maze, pos);
         
         //If there are walls do floodfill and update maze based on new walls found
-        if (ScanWalls(maze))
-        {
+        if (ScanWalls(maze)) {
             //update floodfill if new walls found
             Floodfill(maze);
             UpdateSimulator(maze);
         }
         
         //check if we have explored the 3 directions (forward, left, right)
-        for (int n=0; n<3; n++)
-        {
+        for (int n=0; n<3; n++) {
             Direction direction;
-            switch (n)
-            {
+            switch (n) {
                 case 0: direction = maze.mouse_dir; break; //forward
                 case 1: direction = (Direction)((maze.mouse_dir+1)%4); break; //left
                 case 2: direction = (Direction)((maze.mouse_dir+3)%4); break; //right
@@ -302,18 +292,13 @@ int main(int argc, char* argv[])
             Coord neighbor = FindNeighborCoord(maze.mouse_pos, direction);
 
             //check if there is no wall && neighbor hasn't been visited yet && neighbor could have shorter distance
-            if ((!(maze.cellWalls[pos.y][pos.x] & dir_mask[direction])) && !maze.visited[neighbor.y][neighbor.x]
-                //&& (maze.distances[neighbor.y][neighbor.x] < maze.distances[pos.y][pos.x])
-                ){
-                        StackPush(stack, pos); //Puts middle of the road coords (when both coords in a maze display same distance) into stack for analysis
-                        StackPush(stack, neighbor);
-                        maze.visited[neighbor.y][neighbor.x] = true;
-                }
+            if ((!(maze.cellWalls[pos.y][pos.x] & dir_mask[direction])) && !maze.visited[neighbor.y][neighbor.x]) {
+                StackPush(stack, pos); //Puts middle of the road coords (when both coords in a maze display same distance) into stack for analysis
+                StackPush(stack, neighbor);
+                maze.visited[neighbor.y][neighbor.x] = true;
             }
         }
-    
-    
-    fprintf(stderr, "DONE\n");
+    }
 
     maze.mouse_dir = NORTH;
 	std::cerr << "start a*" << std::endl; 
