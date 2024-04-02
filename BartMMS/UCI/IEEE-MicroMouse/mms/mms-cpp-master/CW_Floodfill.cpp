@@ -7,7 +7,7 @@
 
 const int MAX_COST = 255;
  
-void log(const std::string &text) {
+void log(const std::string &text) { 
 	std::cerr << text << std::endl;
 }
 
@@ -15,7 +15,7 @@ char dir_chars[4] = {'n', 'e', 's', 'w'};
 int dir_mask[4] = {0b1000, 0b0100, 0b0010, 0b0001};
 
 int goalSize;
-void setGoalCell(Maze *maze, int size) {
+void setGoalCell(Maze *maze, int size) {  //sets goal to middle of 16x16 square or to the begnning cell
 	goalSize = size;
 	maze->goalPos = (Coord *)malloc(size * sizeof(Coord));
 	int i = 0;
@@ -23,7 +23,6 @@ void setGoalCell(Maze *maze, int size) {
 		for (int x = 7; x < 9; x++) {
 			for (int y = 7; y < 9; y++) {
 				maze->goalPos[i] = Coord{x, y};
-				std::cerr << "" << std::endl;
 				i++;
 			}
 		}
@@ -33,7 +32,7 @@ void setGoalCell(Maze *maze, int size) {
 	}
 }
 
-CellList *getNeighborCells(Maze *maze, int x, int y)
+CellList *getNeighborCells(Maze *maze, int x, int y) //returns the neighboring cells and if they are blocked or not
 {
 	CellList *cellList = (CellList *)malloc(sizeof(CellList));
 	int walls = maze->cellWalls[y][x];
@@ -96,16 +95,10 @@ CellList *getNeighborCells(Maze *maze, int x, int y)
 	return cellList;
 }
 
-Cell getBestCell(Maze *maze, int x, int y) { 
+Cell getBestCell(Maze *maze, int x, int y) { //returns the optimal (least cost and unblocked) cell a mouse can turn to
 	CellList *adjacentCells = getNeighborCells(maze, x, y);
 	Cell bestCell;
 	int dis[adjacentCells->size];
-	for (int i = 0; i < adjacentCells->size; i++) 
-	{
-		int x = adjacentCells->cells[i].pos.x;
-		int y = adjacentCells->cells[i].pos.y;
-		int z = adjacentCells->cells[i].blocked;
-	}
 	for (int i = 0; i < adjacentCells->size; i++) {
 		int a = adjacentCells->cells[i].pos.x;
 		int b = adjacentCells->cells[i].pos.y;
@@ -126,32 +119,18 @@ Cell getBestCell(Maze *maze, int x, int y) {
 	return bestCell;
 }
 
-Direction clockwiseStep(Maze *maze){
-	return (Direction)((maze->mouse_dir + 1) % 4);
-}
-	
-Direction counterClockwiseStep(Maze *maze){
-	return (Direction)((maze->mouse_dir + 3) % 4);
-}
-	
-void rotate(Maze *maze, int targetDir) {
+void rotate(Maze *maze, int targetDir) { //rotates the mouse to face the target cell
 	if ((maze->mouse_dir + 3) % 4 == targetDir) {
 		API::turnLeft();
-		maze->mouse_dir = counterClockwiseStep(maze);
+		maze->mouse_dir = (Direction)((maze->mouse_dir + 3) % 4);
 	}
-	else {
-		while (maze->mouse_dir != targetDir) {
-			API::turnRight();
-			maze->mouse_dir = clockwiseStep(maze);
-		}
+	while (maze->mouse_dir != targetDir) {
+		API::turnRight();
+		maze->mouse_dir = (Direction)((maze->mouse_dir + 1) % 4);
 	}
 }
 
-void move(Maze *maze) {
-	API::moveForward();
-}
-
-void updateSimulator(Maze maze) {
+void updateSimulator(Maze maze) { //updates the simulator with new cell walls
 	for (int x = 0; x < 16; x++) {
 		for (int y = 0; y < 16; y++) {
 			if (maze.cellWalls[y][x] & NORTH_MASK)
@@ -167,7 +146,7 @@ void updateSimulator(Maze maze) {
 	}
 }
 
-void scanWalls(Maze *maze) {
+void scanWalls(Maze *maze) { //scan the walls of current cell and updates it in memory
 	if (API::wallFront())
 		maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] |= dir_mask[maze->mouse_dir];
 	if (API::wallRight())
@@ -176,7 +155,7 @@ void scanWalls(Maze *maze) {
 		maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] |= dir_mask[(maze->mouse_dir + 3) % 4];
 }
 
-void updateMousePos(Coord *pos, Direction dir) {
+void updateMousePos(Coord *pos, Direction dir) { //updates known mouse positionin memory
 	if (dir == NORTH)
 		pos->y++;
 	if (dir == SOUTH)
@@ -190,7 +169,7 @@ void updateMousePos(Coord *pos, Direction dir) {
 Coord queue[255];
 int head = 0;
 int tail = 0;
-void floodfill(Maze *maze) {
+void floodfill(Maze *maze) { //implementation of floodfill
 	head = 0; 
 	tail = 0;
 	for (int x = 0; x < 16; x++) {
@@ -202,10 +181,6 @@ void floodfill(Maze *maze) {
 		int x = maze->goalPos[i].x;
 		int y = maze->goalPos[i].y;
 		maze->distances[y][x] = 0;
-	}
-	for (int i = 0; i < goalSize; i++) {
-		int x = maze->goalPos[i].x;
-		int y = maze->goalPos[i].y;
 		queue[i] = Coord{x, y};
 		tail++;
 	}
@@ -230,44 +205,34 @@ void floodfill(Maze *maze) {
 	}
 }
 
-//floodfill main 
+//runs the thing in the simulator
 Maze maze;
 int dis = 0;
-int final_dis = MAX_COST;
-int prev_dis = 0;
 int main(int argc, char *argv[]) {
 	maze.mouse_pos = Coord{0, 0};
 	maze.mouse_dir = NORTH;
 	setGoalCell(&maze, 4);
 	floodfill(&maze);
 	int round = 0;
-	while (round < 3) { //prev_dis != final_dis) {
+	while (round < 6) { //prev_dis != final_dis) {
 		scanWalls(&maze);
 		updateSimulator(maze);
 		floodfill(&maze);
 		rotate(&maze, getBestCell(&maze, maze.mouse_pos.x, maze.mouse_pos.y).dir);
-		move(&maze);
+		API::moveForward();
 		dis++;
 		updateMousePos(&maze.mouse_pos, maze.mouse_dir);
 		if (maze.distances[maze.mouse_pos.y][maze.mouse_pos.x] == 0) {
 			setGoalCell(&maze, 1);
-			prev_dis = final_dis;
-			if (dis < final_dis) {
-				final_dis = dis;
-			}
 			round++;
 		}
 		if ((maze.mouse_pos.x == 0) && (maze.mouse_pos.y == 0)) {
 			setGoalCell(&maze, 4);
-			prev_dis = final_dis;
-			if (dis < final_dis) {
-				final_dis = dis;
-			}
 			round++;
 		}
 	}
-	maze.mouse_dir = NORTH;
-	std::cerr << "start a*" << std::endl; 
-	Node* path = a_star_algo(&maze, Coord{7,7});
-	std::cerr << "algo done" << std::endl; 
+	//maze.mouse_dir = NORTH;
+	//std::cerr << "start a*" << std::endl; 
+	//Node* path = a_star_algo(&maze, Coord{7,7});
+	//std::cerr << "algo done" << std::endl; 
 }

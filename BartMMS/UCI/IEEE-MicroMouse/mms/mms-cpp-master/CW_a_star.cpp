@@ -195,9 +195,6 @@ Node* a_star_algo(Maze* maze, Coord goal) { //main algorithm, finds shortest pat
 				std::cerr << "skip" << neighbor[i].loc.x <<", " << neighbor[i].loc.y << std::endl;
 				continue;
 			}
-			else {
-				
-			}
 			neighbor[i].f_score = neighbor[i].g_score + heuristic(neighbor[i].loc, goal);
 			heapIndex = heap_search(openList, neighbor[i]);
 			if (heapIndex < 0) {
