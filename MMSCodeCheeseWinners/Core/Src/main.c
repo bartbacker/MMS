@@ -55,6 +55,8 @@ uint16_t dis_BL;
 uint16_t dis_BR;
 /* USER CODE END PV */
 
+
+
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -69,6 +71,7 @@ static void MX_ADC1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint16_t ir_dists_raw[5] = { 0, 0, 0, 0, 0 };
+uint16_t ir_dists_nom[5] = { 0, 0, 0, 0, 0 };
 
 //Nominal value is our "between what X1-X2 should the mouse be between before re-adjusting"
 const uint16_t BL_nominal = 100;
@@ -88,6 +91,10 @@ float BL_scale = (float) BL_nominal / BL_calib;
 float BR_scale = (float) BR_nominal / BR_calib;
 float FL_scale = (float) FL_nominal / FL_calib;
 float FR_scale = (float) FR_nominal / FR_calib;
+
+bool lWallpresent = 0;
+bool rWallpresent = 0;
+bool fWallpresent = 0;
 
 uint16_t enc_left = 0;
 uint16_t enc_right = 0;
@@ -155,49 +162,27 @@ uint16_t measure_dist(uint16_t dist_t) {
 
 	switch (dist_t) {
 	case DIST_FL:
-		//Do i have to change EMIT_FL_GPIO_Port to GPIOB?
-		/*emitter_port = EMIT_FL_GPIO_Port;
+		emitter_port = EMIT_FL_GPIO_Port;
 		emitter_pin = EMIT_FL_Pin;
 		receiver_port = RECIV_FL_GPIO_Port;
-		receiver_pin = RECIV_FL_Pin;*/
-
-		emitter_port = GPIOB;
-		emitter_pin = GPIO_PIN_12;
-		receiver_port = GPIOB;
-		receiver_pin = GPIO_PIN_1;
+		receiver_pin = RECIV_FL_Pin;
 		ADC1_Select_CH9();
 		break;
 	case DIST_FR:
-		/*emitter_port = EMIT_FR_GPIO_Port;
-		emitter_pin = EMIT_FR_Pin;
-		receiver_port = RECIV_FR_GPIO_Port;
-		receiver_pin = RECIV_FR_Pin;
-		ADC1_Select_CH4();*/
-
 		emitter_port = GPIOB;
 		emitter_pin = GPIO_PIN_5;
 		receiver_port = GPIOA;
 		receiver_pin = GPIO_PIN_4;
+		ADC1_Select_CH4();
 		break;
 	case DIST_BL:
-		//Do i have to change EMIT_BL_GPIO_Port to GPIOB?
-		/*emitter_port = EMIT_BL_GPIO_Port;
-		emitter_pin = EMIT_BL_Pin;
-		receiver_port = RECIV_BL_GPIO_Port;
-		receiver_pin = RECIV_BL_Pin;
-		ADC1_Select_CH8();*/
-
 		emitter_port = GPIOB;
 		emitter_pin = GPIO_PIN_11;
 		receiver_port = GPIOB;
 		receiver_pin = GPIO_PIN_0;
+		ADC1_Select_CH8();
 		break;
 	case DIST_BR:
-		/*emitter_port = EMIT_BR_GPIO_Port;
-		emitter_pin = EMIT_BR_Pin;
-		receiver_port = RECIV_BR_GPIO_Port;
-		receiver_pin = RECIV_BR_Pin;*/
-
 		emitter_port = GPIOB;
 		emitter_pin = GPIO_PIN_10;
 		receiver_port = GPIOA;
@@ -214,7 +199,7 @@ uint16_t measure_dist(uint16_t dist_t) {
 	//Starts ADC Conversion
 	HAL_ADC_Start(&hadc1);
 	//Checks if conversion is complete
-	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+	HAL_ADC_PollForConversion(&hadc1, 10);
 	//Reads ADC Value
 	uint16_t adc_val = HAL_ADC_GetValue(&hadc1);
 	//Stops ADC Conversion
@@ -223,10 +208,12 @@ uint16_t measure_dist(uint16_t dist_t) {
 	//Turns off IR Emitter
 	HAL_GPIO_WritePin(emitter_port, emitter_pin, GPIO_PIN_RESET);
 
+	//ir_dists_raw[(uint8_t)ir_counter] = adc_val;
+
 	return adc_val;
 }
 
-uint16_t pollAverage(uint16_t rawValues) {
+uint16_t updateIR(uint16_t rawValues) {
 	int pollSumFR = 0;
 	int pollSumFL = 0;
 	int pollSumBR = 0;
@@ -243,14 +230,14 @@ uint16_t pollAverage(uint16_t rawValues) {
 		dis_BR = measure_dist(DIST_BR);
 		dis_BL = measure_dist(DIST_BL);
 
-		/*pollSumFR -= dis_FR;
+		pollSumFR -= dis_FR;
 		pollSumFR += dis_FR(FR_scale);
 		pollSumFL -= dis_FL;
 		pollSumFL += dis_FL(FL_scale);
 		pollSumBR -= dis_BR;
 		pollSumBR += dis_BR(BR_scale);
 		pollSumBL -= dis_BL;
-		pollSumBL += dis_BL(BL_scale);*/
+		pollSumBL += dis_BL(BL_scale);
 
 	}
 	pollAvgFR = pollSumFR / 5;
@@ -258,6 +245,16 @@ uint16_t pollAverage(uint16_t rawValues) {
 	pollAvgBR = pollSumBR / 5;
 	pollAvgBL = pollSumBL / 5;
 
+	ir_dists_nom[0] = pollAvgFR;
+	ir_dists_nom[1] = pollAvgFL;
+	ir_dists_nom[2] = pollAvgBR;
+	ir_dists_nom[3] = pollAvgBL;
+
+	lWallpresent = ir_dists_nom[3] > 50;
+	rWallpresent = ir_dists_nom[2] > 50;
+	fWallpresent = ir_dists_nom[0] > 50 && ir_dists_nom[1] > 50;
+
+	return ir_dists_nom;
 	//return array of avg polled valued
 }
 
@@ -328,7 +325,7 @@ int main(void) {
 		//Create angleChecker program which retains raw encoder value between -360-360 for
 		//easy turning purposes and resetting encoder values
 		//Poll sensors (DO AN AVERAGE FOR MULTIPLE POLLS)
-		//ADD pollAverage(uint16_t rawValues)
+		//ADD updateIR(uint16_t rawValues)
 		dis_FR = measure_dist(DIST_FR);
 		dis_FL = measure_dist(DIST_FL);
 		dis_BR = measure_dist(DIST_BR);
