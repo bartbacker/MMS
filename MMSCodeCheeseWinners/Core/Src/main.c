@@ -224,12 +224,17 @@ uint16_t updateIR(uint16_t rawValues) {
 	int pollAvgBR = 0;
 	int pollAvgBL = 0;
 
+	float err = 0;
+	int target = 0;
+	int position = 0;
+
 	for (int i = 0; i < 5; i++) {
 		dis_FR = measure_dist(DIST_FR);
 		dis_FL = measure_dist(DIST_FL);
 		dis_BR = measure_dist(DIST_BR);
 		dis_BL = measure_dist(DIST_BL);
 
+		//include the subtraction portion?
 		pollSumFR -= dis_FR;
 		pollSumFR += dis_FR(FR_scale);
 		pollSumFL -= dis_FL;
@@ -250,9 +255,28 @@ uint16_t updateIR(uint16_t rawValues) {
 	ir_dists_nom[2] = pollAvgBR;
 	ir_dists_nom[3] = pollAvgBL;
 
+	//Save these for if the mouse actually detects a wall (i.e. this is not PID Control)
 	lWallpresent = ir_dists_nom[3] > 50;
 	rWallpresent = ir_dists_nom[2] > 50;
 	fWallpresent = ir_dists_nom[0] > 50 && ir_dists_nom[1] > 50;
+
+	//CHANGE THIS CODE SO lWallpresent is just the ir_dists_nom value?
+	/*if(lWallpresent > 60 && (rWallpresent < 30 && rWallpresent > 10)){
+		position = ir_dists_nom[3];
+	}
+	if(rWallpresent > 60 && (lWallpresent < 30 && lWallpresent > 10)){
+		position = -(ir_dists_nom[2]);
+	}*/
+
+	if(ir_dist_nom[3] > 60 && (ir_dist_nom[2] < 30 && ir_dist_nom[2] > 10)){
+		position = ir_dists_nom[3];
+	}
+	if(ir_dist_nom[2] > 60 && (ir_dist_nom[3] < 30 && ir_dist_nom[3] > 10)){
+		position = -(ir_dists_nom[2]);
+	}
+
+	err = target - position;
+	position += err * 0.5;
 
 	return ir_dists_nom;
 	//return array of avg polled valued
@@ -325,13 +349,28 @@ int main(void) {
 		//Create angleChecker program which retains raw encoder value between -360-360 for
 		//easy turning purposes and resetting encoder values
 		//Poll sensors (DO AN AVERAGE FOR MULTIPLE POLLS)
-		//ADD updateIR(uint16_t rawValues)
-		dis_FR = measure_dist(DIST_FR);
+		updateIR(rawValues);
+		/*dis_FR = measure_dist(DIST_FR);
 		dis_FL = measure_dist(DIST_FL);
 		dis_BR = measure_dist(DIST_BR);
-		dis_BL = measure_dist(DIST_BL);
+		dis_BL = measure_dist(DIST_BL);*/
 		HAL_Delay(1000);
 
+		//Go Straight
+		if(position < 15 && position > -15){
+			TIM2->CCR3 = 1200;
+			TIM2->CCR4 = 1200;
+		}
+		//Go slight right
+		if(position > 15){
+			TIM2->CCR3 = 1100;
+			TIM2->CCR4 = 1200;
+		}
+		//Go slight left
+		if(position < -15){
+			TIM2->CCR3 = 1200;
+			TIM2->CCR4 = 1100;
+		}
 		//Scan walls (NEED TO ADD DIAG IR SENSORS FOR HORIZONTAL WALLS)
 
 		/*if(dis_BR < 300){
