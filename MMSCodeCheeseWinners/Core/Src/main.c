@@ -71,7 +71,7 @@ static void MX_ADC1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint16_t ir_dists_raw[5] = { 0, 0, 0, 0, 0 };
-uint16_t ir_dists_nom[5] = { 0, 0, 0, 0, 0 };
+uint16_t ir_dists_norm[5] = { 0, 0, 0, 0, 0 };
 
 //Nominal value is our "between what X1-X2 should the mouse be between before re-adjusting"
 const uint16_t BL_nominal = 100;
@@ -91,6 +91,9 @@ float BL_scale = (float) BL_nominal / BL_calib;
 float BR_scale = (float) BR_nominal / BR_calib;
 float FL_scale = (float) FL_nominal / FL_calib;
 float FR_scale = (float) FR_nominal / FR_calib;
+
+uint16_t motorRightSpeed;
+uint16_t motorLeftSpeed;
 
 bool lWallpresent = 0;
 bool rWallpresent = 0;
@@ -225,6 +228,8 @@ uint16_t updateIR(uint16_t rawValues) {
 	int pollAvgBL = 0;
 
 	float err = 0;
+	//float left_err = 0;
+	//float right_err = 0;
 	int target = 0;
 	int position = 0;
 
@@ -250,36 +255,67 @@ uint16_t updateIR(uint16_t rawValues) {
 	pollAvgBR = pollSumBR / 5;
 	pollAvgBL = pollSumBL / 5;
 
-	ir_dists_nom[0] = pollAvgFR;
-	ir_dists_nom[1] = pollAvgFL;
-	ir_dists_nom[2] = pollAvgBR;
-	ir_dists_nom[3] = pollAvgBL;
+	ir_dists_norm[0] = pollAvgFR;
+	ir_dists_norm[1] = pollAvgFL;
+	ir_dists_norm[2] = pollAvgBR;
+	ir_dists_norm[3] = pollAvgBL;
 
 	//Save these for if the mouse actually detects a wall (i.e. this is not PID Control)
-	lWallpresent = ir_dists_nom[3] > 50;
-	rWallpresent = ir_dists_nom[2] > 50;
-	fWallpresent = ir_dists_nom[0] > 50 && ir_dists_nom[1] > 50;
+	lWallpresent = ir_dists_norm[3] > 50;
+	rWallpresent = ir_dists_norm[2] > 50;
+	fWallpresent = ir_dists_norm[0] > 50 && ir_dists_norm[1] > 50;
 
 	//CHANGE THIS CODE SO lWallpresent is just the ir_dists_nom value?
 	/*if(lWallpresent > 60 && (rWallpresent < 30 && rWallpresent > 10)){
-		position = ir_dists_nom[3];
+		left_err = BL_nominal - ir_dist_norm[3];
 	}
 	if(rWallpresent > 60 && (lWallpresent < 30 && lWallpresent > 10)){
-		position = -(ir_dists_nom[2]);
+		right_err = BR_nominal - ir_dist_norm[2];
+	}
+	if(fWallpresent > 60){
+		err = FR_nominal - ir_dist_norm[0];
 	}*/
 
-	if(ir_dist_nom[3] > 60 && (ir_dist_nom[2] < 30 && ir_dist_nom[2] > 10)){
-		position = ir_dists_nom[3];
+	if(ir_dist_norm[3] > 60 && (ir_dist_norm[2] < 30 && ir_dist_norm[2] > 10)){
+		position = ir_dists_norm[3];
 	}
-	if(ir_dist_nom[2] > 60 && (ir_dist_nom[3] < 30 && ir_dist_nom[3] > 10)){
-		position = -(ir_dists_nom[2]);
+	if(ir_dist_norm[2] > 60 && (ir_dist_norm[3] < 30 && ir_dist_norm[3] > 10)){
+		position = -(ir_dists_norm[2]);
 	}
 
 	err = target - position;
 	position += err * 0.5;
 
-	return ir_dists_nom;
+	return ir_dists_norm;
 	//return array of avg polled valued
+}
+
+void AddWall() //Adds cell wall in pos coord + direction. A cell wall is also added to the neighbor facing in the same direction as the mouse but in the opposite direction
+{
+    /*maze.cellWalls[pos.y][pos.x] |= dir_mask[direction];
+    Coord neighbor = FindNeighborCoord(pos, direction);
+    if (neighbor.x>=0 && neighbor.x<16 && neighbor.y>=0 && neighbor.y<16)
+        maze.cellWalls[neighbor.y][neighbor.x] |= dir_mask[(direction + 2) % 4];*/
+}
+
+bool ScanWalls() //Scans wall around mouse after every iteration and adds walls based on if a wall is scanned in front, to the right, or to the left of the mouse. The function also returns if any walls were found (true/false)
+{
+    bool found = false;
+
+    if (fWallpresent & err < 10) {
+        //AddWall(maze, maze.mouse_pos, maze.mouse_dir);
+        found = true;
+    }
+    if (rWallpresent & right_err < 10) {
+        //AddWall(maze, maze.mouse_pos, (Direction)((maze.mouse_dir + 1) % 4));
+        found = true;
+    }
+    if (lWallpresent & left_err < 10) {
+        //AddWall(maze, maze.mouse_pos, (Direction)((maze.mouse_dir + 3) % 4));
+        found = true;
+    }
+
+    return found;
 }
 
 /* USER CODE END 0 */
@@ -331,8 +367,13 @@ int main(void) {
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, 1);
 
 	//Sets timer frequencies (1000/2047 -> ~50% duty cycle / half motor speed)
-	TIM2->CCR3 = 1200;
-	TIM2->CCR4 = 1200;
+	//See if you can initialize motor speeds like this?
+	//Also see if you initialized it the right way (i.e. motorRightSpeed not with left motor)
+	motorRightSpeed = TIM2->CCR3;
+	motorLeftSpeed = TIM2->CCR4;
+
+	motorRightSpeed = 1200;
+	motorLeftSpeed = 1200;
 	HAL_Delay(100);
 
 	//Are these needed? They're supposed to actually start the timers once set
@@ -358,33 +399,21 @@ int main(void) {
 
 		//Go Straight
 		if(position < 15 && position > -15){
-			TIM2->CCR3 = 1200;
-			TIM2->CCR4 = 1200;
+			motorRightSpeed = 1200;
+			motorLeftSpeed = 1200;
 		}
 		//Go slight right
 		if(position > 15){
-			TIM2->CCR3 = 1100;
-			TIM2->CCR4 = 1200;
+			motorRightSpeed = 1100;
+			motorLeftSpeed = 1200;
 		}
 		//Go slight left
 		if(position < -15){
-			TIM2->CCR3 = 1200;
-			TIM2->CCR4 = 1100;
+			motorRightSpeed = 1200;
+			motorLeftSpeed = 1100;
 		}
-		//Scan walls (NEED TO ADD DIAG IR SENSORS FOR HORIZONTAL WALLS)
 
-		/*if(dis_BR < 300){
-			printf("Right Wall is too close. Re-adjusting");
-		}
-		if(dis_BL < 300){
-			printf("Left Wall is too close. Re-adjusting");
-		}
-		if(dis_FR < 300){
-			printf("Front Wall is too close. Re-adjusting");
-		}
-		if(dis_FL < 300){
-			printf("Front Wall is too close. Re-adjusting");
-		}*/
+		//Scan walls
 
 		//Run Flood fill
 		//Figure out best cell
