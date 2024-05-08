@@ -53,6 +53,8 @@ uint16_t dis_FL;
 uint16_t dis_FR;
 uint16_t dis_BL;
 uint16_t dis_BR;
+
+uint16_t adc_val;
 /* USER CODE END PV */
 
 
@@ -94,10 +96,11 @@ float FR_scale = (float) FR_nominal / FR_calib;
 
 uint16_t motorRightSpeed;
 uint16_t motorLeftSpeed;
+float v_out;
 
-bool lWallpresent = 0;
-bool rWallpresent = 0;
-bool fWallpresent = 0;
+//bool lWallpresent;
+//bool rWallpresent;
+//bool fWallpresent;
 
 uint16_t enc_left = 0;
 uint16_t enc_right = 0;
@@ -172,24 +175,24 @@ uint16_t measure_dist(uint16_t dist_t) {
 		ADC1_Select_CH9();
 		break;
 	case DIST_FR:
-		emitter_port = GPIOB;
-		emitter_pin = GPIO_PIN_5;
-		receiver_port = GPIOA;
-		receiver_pin = GPIO_PIN_4;
+		emitter_port = EMIT_FR_GPIO_Port;
+		emitter_pin = EMIT_FR_Pin;
+		receiver_port = RECIV_FR_GPIO_Port;
+		receiver_pin = RECIV_FR_Pin;
 		ADC1_Select_CH4();
 		break;
 	case DIST_BL:
-		emitter_port = GPIOB;
-		emitter_pin = GPIO_PIN_11;
-		receiver_port = GPIOB;
-		receiver_pin = GPIO_PIN_0;
+		emitter_port = EMIT_BL_GPIO_Port;
+		emitter_pin = EMIT_BL_Pin;
+		receiver_port = RECIV_BL_GPIO_Port;
+		receiver_pin = RECIV_BL_Pin;
 		ADC1_Select_CH8();
 		break;
 	case DIST_BR:
-		emitter_port = GPIOB;
-		emitter_pin = GPIO_PIN_10;
-		receiver_port = GPIOA;
-		receiver_pin = GPIO_PIN_5;
+		emitter_port = EMIT_BR_GPIO_Port;
+		emitter_pin = EMIT_BR_Pin;
+		receiver_port = RECIV_BR_GPIO_Port;
+		receiver_pin = RECIV_BR_Pin;
 		ADC1_Select_CH5();
 		break;
 	default:
@@ -216,7 +219,7 @@ uint16_t measure_dist(uint16_t dist_t) {
 	return adc_val;
 }
 
-uint16_t updateIR(uint16_t rawValues) {
+float updateIR() {
 	int pollSumFR = 0;
 	int pollSumFL = 0;
 	int pollSumBR = 0;
@@ -227,9 +230,6 @@ uint16_t updateIR(uint16_t rawValues) {
 	int pollAvgBR = 0;
 	int pollAvgBL = 0;
 
-	float err = 0;
-	//float left_err = 0;
-	//float right_err = 0;
 	int target = 0;
 	int position = 0;
 
@@ -239,15 +239,15 @@ uint16_t updateIR(uint16_t rawValues) {
 		dis_BR = measure_dist(DIST_BR);
 		dis_BL = measure_dist(DIST_BL);
 
-		//include the subtraction portion?
+		//include the subtraction portion and change += to just =?
 		pollSumFR -= dis_FR;
-		pollSumFR += dis_FR(FR_scale);
+		pollSumFR += dis_FR*(FR_scale);
 		pollSumFL -= dis_FL;
-		pollSumFL += dis_FL(FL_scale);
+		pollSumFL += dis_FL*(FL_scale);
 		pollSumBR -= dis_BR;
-		pollSumBR += dis_BR(BR_scale);
+		pollSumBR += dis_BR*(BR_scale);
 		pollSumBL -= dis_BL;
-		pollSumBL += dis_BL(BL_scale);
+		pollSumBL += dis_BL*(BL_scale);
 
 	}
 	pollAvgFR = pollSumFR / 5;
@@ -260,33 +260,38 @@ uint16_t updateIR(uint16_t rawValues) {
 	ir_dists_norm[2] = pollAvgBR;
 	ir_dists_norm[3] = pollAvgBL;
 
+	float err = 0;
+	float left_err = (float)BL_nominal - (float)pollAvgBL;
+	float right_err = (float)BR_nominal - (float)pollAvgBR;
+
 	//Save these for if the mouse actually detects a wall (i.e. this is not PID Control)
-	lWallpresent = ir_dists_norm[3] > 50;
-	rWallpresent = ir_dists_norm[2] > 50;
-	fWallpresent = ir_dists_norm[0] > 50 && ir_dists_norm[1] > 50;
+	//lWallpresent = ir_dists_norm[3] > 50;
+	//rWallpresent = ir_dists_norm[2] > 50;
+	//fWallpresent = ir_dists_norm[0] > 50 && ir_dists_norm[1] > 50;
 
 	//CHANGE THIS CODE SO lWallpresent is just the ir_dists_nom value?
-	/*if(lWallpresent > 60 && (rWallpresent < 30 && rWallpresent > 10)){
-		left_err = BL_nominal - ir_dist_norm[3];
+	/*if(lWallpresent && rWallpresent){
+		err = right_err - left_err;
 	}
-	if(rWallpresent > 60 && (lWallpresent < 30 && lWallpresent > 10)){
-		right_err = BR_nominal - ir_dist_norm[2];
+	else if(lWallpresent){
+		error = -5.f * left_error;
 	}
-	if(fWallpresent > 60){
-		err = FR_nominal - ir_dist_norm[0];
+	else if(rWallpresent){
+		error = 5.f * left_error;
 	}*/
 
-	if(ir_dist_norm[3] > 60 && (ir_dist_norm[2] < 30 && ir_dist_norm[2] > 10)){
+	if(ir_dists_norm[3] > 60 && (ir_dists_norm[2] < 30 && ir_dists_norm[2] > 10)){
 		position = ir_dists_norm[3];
 	}
-	if(ir_dist_norm[2] > 60 && (ir_dist_norm[3] < 30 && ir_dist_norm[3] > 10)){
+	if(ir_dists_norm[2] > 60 && (ir_dists_norm[3] < 30 && ir_dists_norm[3] > 10)){
 		position = -(ir_dists_norm[2]);
 	}
 
 	err = target - position;
 	position += err * 0.5;
+	v_out = err * 0.05;
 
-	return ir_dists_norm;
+	return v_out;
 	//return array of avg polled valued
 }
 
@@ -298,7 +303,7 @@ void AddWall() //Adds cell wall in pos coord + direction. A cell wall is also ad
         maze.cellWalls[neighbor.y][neighbor.x] |= dir_mask[(direction + 2) % 4];*/
 }
 
-bool ScanWalls() //Scans wall around mouse after every iteration and adds walls based on if a wall is scanned in front, to the right, or to the left of the mouse. The function also returns if any walls were found (true/false)
+/*bool ScanWalls() //Scans wall around mouse after every iteration and adds walls based on if a wall is scanned in front, to the right, or to the left of the mouse. The function also returns if any walls were found (true/false)
 {
     bool found = false;
 
@@ -316,7 +321,7 @@ bool ScanWalls() //Scans wall around mouse after every iteration and adds walls 
     }
 
     return found;
-}
+}*/
 
 /* USER CODE END 0 */
 
@@ -369,11 +374,14 @@ int main(void) {
 	//Sets timer frequencies (1000/2047 -> ~50% duty cycle / half motor speed)
 	//See if you can initialize motor speeds like this?
 	//Also see if you initialized it the right way (i.e. motorRightSpeed not with left motor)
-	motorRightSpeed = TIM2->CCR3;
+	/*motorRightSpeed = TIM2->CCR3;
 	motorLeftSpeed = TIM2->CCR4;
 
 	motorRightSpeed = 1200;
-	motorLeftSpeed = 1200;
+	motorLeftSpeed = 1200;*/
+
+	TIM2->CCR3 = 1200;
+	TIM2->CCR4 = 1200;
 	HAL_Delay(100);
 
 	//Are these needed? They're supposed to actually start the timers once set
@@ -390,15 +398,19 @@ int main(void) {
 		//Create angleChecker program which retains raw encoder value between -360-360 for
 		//easy turning purposes and resetting encoder values
 		//Poll sensors (DO AN AVERAGE FOR MULTIPLE POLLS)
-		updateIR(rawValues);
-		/*dis_FR = measure_dist(DIST_FR);
+
+		//updateIR();
+
+		//Turns off IR Emitter
+
+		dis_FR = measure_dist(DIST_FR);
 		dis_FL = measure_dist(DIST_FL);
 		dis_BR = measure_dist(DIST_BR);
-		dis_BL = measure_dist(DIST_BL);*/
-		HAL_Delay(1000);
+		dis_BL = measure_dist(DIST_BL);
+		//HAL_Delay(100);
 
 		//Go Straight
-		if(position < 15 && position > -15){
+		/*if(position < 15 && position > -15){
 			motorRightSpeed = 1200;
 			motorLeftSpeed = 1200;
 		}
@@ -411,7 +423,7 @@ int main(void) {
 		if(position < -15){
 			motorRightSpeed = 1200;
 			motorLeftSpeed = 1100;
-		}
+		}*/
 
 		//Scan walls
 
